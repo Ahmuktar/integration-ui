@@ -1,0 +1,1688 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alumio Workflow Automation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .sidebar-item {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      .sidebar-item:hover {
+        background-color: rgba(107, 33, 168, 0.1);
+      }
+      .sidebar-item.active {
+        background-color: rgba(107, 33, 168, 0.1);
+      }
+      .sidebar-item i {
+        width: 20px;
+        text-align: center;
+        margin-right: 10px;
+      }
+      .sidebar-submenu {
+        margin-left: 20px;
+      }
+      .expanded-icon {
+        transform: rotate(90deg);
+      }
+      .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 40px;
+        height: 20px;
+      }
+      .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.4s;
+        border-radius: 34px;
+      }
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 2px;
+        bottom: 2px;
+        background-color: white;
+        transition: 0.4s;
+        border-radius: 50%;
+      }
+      input:checked + .slider {
+        background-color: #8b5cf6;
+      }
+      input:checked + .slider:before {
+        transform: translateX(20px);
+      }
+      .narrow-sidebar-item {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6b7280;
+        border-radius: 8px;
+        margin: 8px 0;
+        cursor: pointer;
+        transition: background-color 0.2s, color 0.2s;
+      }
+      .narrow-sidebar-item:hover {
+        background-color: rgba(107, 33, 168, 0.1);
+        color: #8b5cf6;
+      }
+      .narrow-sidebar-item.active {
+        background-color: rgba(107, 33, 168, 0.1);
+        color: #8b5cf6;
+      }
+      .notification-badge {
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        width: 14px;
+        height: 14px;
+        background-color: #ef4444;
+        border-radius: 50%;
+        font-size: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+      }
+      .system-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+      }
+      .system-badge.erp {
+        background-color: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+      }
+      .system-badge.crm {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+      }
+      .system-badge.ecommerce {
+        background-color: rgba(249, 115, 22, 0.1);
+        color: #f97316;
+      }
+      .system-badge.pim {
+        background-color: rgba(139, 92, 246, 0.1);
+        color: #8b5cf6;
+      }
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+      }
+      .status-badge.active {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+      }
+      .status-badge.error {
+        background-color: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+      }
+      .status-badge.warning {
+        background-color: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+      }
+      .status-badge.inactive {
+        background-color: rgba(107, 114, 128, 0.1);
+        color: #6b7280;
+      }
+      .workflow-node {
+        transition: transform 0.2s;
+        cursor: move;
+        z-index: 10;
+      }
+      .workflow-node:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      .workflow-node.trigger {
+        border-left: 4px solid #8b5cf6;
+      }
+      .workflow-node.condition {
+        border-left: 4px solid #f59e0b;
+      }
+      .workflow-node.action {
+        border-left: 4px solid #3b82f6;
+      }
+      .workflow-node.error {
+        border-left: 4px solid #ef4444;
+      }
+      .workflow-connector {
+        position: absolute;
+        width: 2px;
+        background-color: #e5e7eb;
+        z-index: 5;
+      }
+      .workflow-connector::after {
+        content: "";
+        position: absolute;
+        bottom: -5px;
+        left: -4px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #e5e7eb;
+      }
+      .workflow-connector.active {
+        background-color: #8b5cf6;
+      }
+      .workflow-connector.active::after {
+        background-color: #8b5cf6;
+      }
+      .workflow-connector.condition-yes {
+        background-color: #10b981;
+      }
+      .workflow-connector.condition-yes::after {
+        background-color: #10b981;
+      }
+      .workflow-connector.condition-no {
+        background-color: #ef4444;
+      }
+      .workflow-connector.condition-no::after {
+        background-color: #ef4444;
+      }
+      .workflow-toolbox-item {
+        transition: transform 0.2s;
+        cursor: grab;
+      }
+      .workflow-toolbox-item:hover {
+        transform: translateY(-2px);
+      }
+      .workflow-toolbox-item:active {
+        cursor: grabbing;
+      }
+      .schedule-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+      }
+      .schedule-badge.realtime {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+      }
+      .schedule-badge.scheduled {
+        background-color: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+      }
+      .schedule-badge.manual {
+        background-color: rgba(107, 114, 128, 0.1);
+        color: #6b7280;
+      }
+      .condition-path {
+        position: absolute;
+        font-size: 10px;
+        font-weight: 500;
+        padding: 2px 6px;
+        border-radius: 10px;
+        z-index: 15;
+      }
+      .condition-path.yes {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+      }
+      .condition-path.no {
+        background-color: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+      }
+      .pulse-dot {
+        position: relative;
+      }
+      .pulse-dot::before {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        background-color: inherit;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+        z-index: -1;
+      }
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+          opacity: 0.8;
+        }
+        70% {
+          transform: scale(2);
+          opacity: 0;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 0;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50">
+    <!-- Header -->
+    <header
+      class="bg-purple-800 text-white p-2 flex items-center justify-between"
+    >
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-2 px-2">
+          <div class="flex space-x-1">
+            <div class="w-2 h-2 bg-red-400 rounded-full"></div>
+            <div class="w-2 h-2 bg-yellow-400 rounded-full"></div>
+            <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+          </div>
+          <div class="flex items-center">
+            <img
+              src="/placeholder.svg?height=24&width=24"
+              alt="Alumio Logo"
+              class="h-6 w-6"
+            />
+            <span class="ml-2 font-medium">alumio</span>
+          </div>
+        </div>
+        <div class="flex space-x-2">
+          <button
+            class="px-3 py-1 bg-purple-700 rounded-md flex items-center text-sm"
+          >
+            <span class="w-2 h-2 bg-white rounded-full mr-2"></span>
+            Shopify to SAP
+            <i class="fas fa-times ml-2"></i>
+          </button>
+          <button
+            class="px-3 py-1 bg-purple-700 rounded-md flex items-center text-sm"
+          >
+            <span class="w-2 h-2 bg-white rounded-full mr-2"></span>
+            Magento to Netsuite
+          </button>
+          <button
+            class="px-3 py-1 bg-purple-700 rounded-md flex items-center text-sm"
+          >
+            <span class="w-2 h-2 bg-white rounded-full mr-2"></span>
+            Akeneo to Shopify
+          </button>
+          <button
+            class="px-2 py-1 bg-purple-700 rounded-md flex items-center text-sm"
+          >
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+      </div>
+      <div class="flex items-center space-x-4">
+        <button class="p-2"><i class="fas fa-question-circle"></i></button>
+        <button class="p-2"><i class="fas fa-share"></i></button>
+        <button class="p-2"><i class="fas fa-shield"></i></button>
+        <div class="border-l border-purple-600 h-6 mx-2"></div>
+        <button class="p-2"><i class="fas fa-ellipsis-h"></i></button>
+      </div>
+    </header>
+
+    <!-- Main Navigation -->
+    <nav class="bg-white border-b flex items-center px-4 py-2">
+      <div class="flex space-x-6">
+        <a href="#" class="text-gray-600">INTEGRATIONS</a>
+        <a href="#" class="text-gray-600">DATA MAPPING</a>
+        <a href="#" class="text-purple-800 font-medium">WORKFLOW AUTOMATION</a>
+        <span class="text-gray-400 border rounded px-2 ml-2">4</span>
+      </div>
+      <div class="ml-auto flex items-center space-x-4">
+        <a href="#" class="text-gray-600">SETTINGS</a>
+        <a href="#" class="text-gray-600">DEPLOY</a>
+        <a href="#" class="text-gray-600">LOGS</a>
+      </div>
+    </nav>
+
+    <div class="flex h-[calc(100vh-120px)]">
+      <!-- Narrow Icon Sidebar -->
+      <aside class="w-14 bg-white border-r flex flex-col items-center py-4">
+        <div class="flex-1 flex flex-col items-center">
+          <div class="narrow-sidebar-item" title="Dashboard">
+            <i class="fas fa-th-large"></i>
+          </div>
+          <div class="narrow-sidebar-item" title="Connectors & Webhooks">
+            <i class="fas fa-plug"></i>
+          </div>
+          <div class="narrow-sidebar-item" title="Data Mapping">
+            <i class="fas fa-exchange-alt"></i>
+          </div>
+          <div class="narrow-sidebar-item active" title="Workflow Automation">
+            <i class="fas fa-sitemap"></i>
+          </div>
+          <div class="narrow-sidebar-item" title="Monitoring">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <div class="narrow-sidebar-item" title="Security">
+            <i class="fas fa-shield-alt"></i>
+          </div>
+        </div>
+        <div class="mt-auto">
+          <div class="narrow-sidebar-item" title="Notifications">
+            <i class="fas fa-bell"></i>
+          </div>
+          <div class="narrow-sidebar-item" title="Settings">
+            <i class="fas fa-cog"></i>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Left Sidebar -->
+      <aside class="w-64 border-r bg-white overflow-y-auto">
+        <div class="p-4">
+          <div class="relative mb-4">
+            <input
+              type="text"
+              placeholder="Search workflows..."
+              class="w-full pl-10 pr-4 py-2 border rounded-md"
+            />
+            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+          </div>
+
+          <div class="space-y-1">
+            <!-- Sidebar items -->
+            <div class="sidebar-item">
+              <i class="fas fa-home text-gray-500"></i>
+              <span>Overview</span>
+            </div>
+
+            <div class="sidebar-item active">
+              <i class="fas fa-chevron-right expanded-icon text-gray-500"></i>
+              <span>Workflows</span>
+            </div>
+
+            <div class="sidebar-submenu ml-6 space-y-1">
+              <div class="sidebar-item active">
+                <i class="fas fa-shopping-cart text-gray-500"></i>
+                <span>Shopify to SAP</span>
+                <i class="fas fa-check-circle ml-auto text-green-500"></i>
+              </div>
+
+              <div class="sidebar-item">
+                <i class="fas fa-shopping-bag text-gray-500"></i>
+                <span>Magento to Netsuite</span>
+                <i class="fas fa-check-circle ml-auto text-green-500"></i>
+              </div>
+
+              <div class="sidebar-item">
+                <i class="fas fa-box text-gray-500"></i>
+                <span>Akeneo to Shopify</span>
+                <i
+                  class="fas fa-exclamation-circle ml-auto text-yellow-500"
+                ></i>
+              </div>
+
+              <div class="sidebar-item">
+                <i class="fas fa-store text-gray-500"></i>
+                <span>WooCommerce to SAP</span>
+                <i class="fas fa-check-circle ml-auto text-green-500"></i>
+              </div>
+
+              <div class="sidebar-item">
+                <i class="fas fa-plus text-gray-500"></i>
+                <span>New Workflow</span>
+              </div>
+            </div>
+
+            <div class="sidebar-item">
+              <i class="fas fa-chevron-right text-gray-500"></i>
+              <span>Triggers</span>
+            </div>
+
+            <div class="sidebar-item">
+              <i class="fas fa-chevron-right text-gray-500"></i>
+              <span>Conditions</span>
+            </div>
+
+            <div class="sidebar-item">
+              <i class="fas fa-chevron-right text-gray-500"></i>
+              <span>Actions</span>
+            </div>
+
+            <div class="sidebar-item">
+              <i class="fas fa-chevron-right text-gray-500"></i>
+              <span>Scheduled Jobs</span>
+            </div>
+
+            <div class="sidebar-item">
+              <i class="fas fa-chevron-right text-gray-500"></i>
+              <span>Error Handling</span>
+            </div>
+
+            <div class="sidebar-item">
+              <i class="fas fa-chevron-right text-gray-500"></i>
+              <span>Templates</span>
+            </div>
+          </div>
+
+          <div class="mt-8">
+            <h3
+              class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-3"
+            >
+              Active Workflows
+            </h3>
+            <div class="space-y-2">
+              <div
+                class="flex items-center px-3 py-2 rounded-md hover:bg-gray-50"
+              >
+                <div
+                  class="w-2 h-2 bg-green-500 rounded-full mr-2 pulse-dot"
+                ></div>
+                <span class="text-sm">Shopify to SAP</span>
+                <span class="ml-auto text-xs text-gray-500">Active</span>
+              </div>
+              <div
+                class="flex items-center px-3 py-2 rounded-md hover:bg-gray-50"
+              >
+                <div
+                  class="w-2 h-2 bg-green-500 rounded-full mr-2 pulse-dot"
+                ></div>
+                <span class="text-sm">Magento to Netsuite</span>
+                <span class="ml-auto text-xs text-gray-500">Active</span>
+              </div>
+              <div
+                class="flex items-center px-3 py-2 rounded-md hover:bg-gray-50"
+              >
+                <div
+                  class="w-2 h-2 bg-yellow-500 rounded-full mr-2 pulse-dot"
+                ></div>
+                <span class="text-sm">Akeneo to Shopify</span>
+                <span class="ml-auto text-xs text-gray-500">Warning</span>
+              </div>
+              <div
+                class="flex items-center px-3 py-2 rounded-md hover:bg-gray-50"
+              >
+                <div
+                  class="w-2 h-2 bg-green-500 rounded-full mr-2 pulse-dot"
+                ></div>
+                <span class="text-sm">WooCommerce to SAP</span>
+                <span class="ml-auto text-xs text-gray-500">Active</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="flex-1 overflow-y-auto bg-gray-50 p-6">
+        <div class="max-w-7xl mx-auto">
+          <!-- Header Section -->
+          <div class="flex justify-between items-center mb-6">
+            <div>
+              <h1 class="text-2xl font-bold text-gray-900">Workflow Builder</h1>
+              <p class="text-gray-600">Shopify to SAP Order Fulfillment</p>
+            </div>
+            <div class="flex space-x-3">
+              <button
+                class="px-4 py-2 bg-white border rounded-md text-gray-700 flex items-center"
+              >
+                <i class="fas fa-play mr-2"></i> Test Workflow
+              </button>
+              <button
+                class="px-4 py-2 bg-white border rounded-md text-gray-700 flex items-center"
+              >
+                <i class="fas fa-save mr-2"></i> Save Draft
+              </button>
+              <button
+                class="px-4 py-2 bg-purple-600 text-white rounded-md flex items-center"
+              >
+                <i class="fas fa-check mr-2"></i> Publish
+              </button>
+            </div>
+          </div>
+
+          <!-- Workflow Overview -->
+          <div class="bg-white rounded-lg shadow-sm border mb-6">
+            <div class="p-4 border-b flex justify-between items-center">
+              <div>
+                <h2 class="font-semibold text-gray-900">Workflow Overview</h2>
+                <p class="text-sm text-gray-600">
+                  Automate order fulfillment between Shopify and SAP
+                </p>
+              </div>
+              <div class="flex items-center space-x-4">
+                <div class="flex items-center">
+                  <span class="text-sm text-gray-600 mr-2">Status:</span>
+                  <span class="status-badge active">
+                    <i class="fas fa-circle text-xs mr-1"></i> Active
+                  </span>
+                </div>
+                <div class="flex items-center">
+                  <span class="text-sm text-gray-600 mr-2">Type:</span>
+                  <span class="schedule-badge realtime">
+                    <i class="fas fa-bolt text-xs mr-1"></i> Real-time
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Workflow Stats -->
+                <div class="bg-gray-50 rounded-lg p-4 border">
+                  <h3 class="text-sm font-medium text-gray-700 mb-3">
+                    Workflow Statistics
+                  </h3>
+                  <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                      <span class="text-sm text-gray-600"
+                        >Executions (24h):</span
+                      >
+                      <span class="font-medium">247</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-sm text-gray-600">Success Rate:</span>
+                      <span class="font-medium text-green-600">98.4%</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-sm text-gray-600"
+                        >Avg. Execution Time:</span
+                      >
+                      <span class="font-medium">1.2s</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-sm text-gray-600">Last Execution:</span>
+                      <span class="font-medium">2 min ago</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Workflow Systems -->
+                <div class="bg-gray-50 rounded-lg p-4 border">
+                  <h3 class="text-sm font-medium text-gray-700 mb-3">
+                    Connected Systems
+                  </h3>
+                  <div class="space-y-3">
+                    <div class="flex items-center">
+                      <div
+                        class="w-8 h-8 bg-orange-100 rounded-md flex items-center justify-center mr-3"
+                      >
+                        <i class="fas fa-shopping-cart text-orange-600"></i>
+                      </div>
+                      <div>
+                        <div class="font-medium">Shopify</div>
+                        <div class="text-xs text-gray-500">Source System</div>
+                      </div>
+                      <span class="ml-auto text-xs text-green-600"
+                        >Connected</span
+                      >
+                    </div>
+                    <div class="flex items-center">
+                      <div
+                        class="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center mr-3"
+                      >
+                        <i class="fas fa-database text-blue-600"></i>
+                      </div>
+                      <div>
+                        <div class="font-medium">SAP ERP</div>
+                        <div class="text-xs text-gray-500">Target System</div>
+                      </div>
+                      <span class="ml-auto text-xs text-green-600"
+                        >Connected</span
+                      >
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Workflow Execution -->
+                <div class="bg-gray-50 rounded-lg p-4 border">
+                  <h3 class="text-sm font-medium text-gray-700 mb-3">
+                    Execution Settings
+                  </h3>
+                  <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm">Real-time Processing</span>
+                      <label class="toggle-switch">
+                        <input type="checkbox" checked />
+                        <span class="slider"></span>
+                      </label>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm">Batch Processing</span>
+                      <label class="toggle-switch">
+                        <input type="checkbox" />
+                        <span class="slider"></span>
+                      </label>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm">Auto-retry on Failure</span>
+                      <label class="toggle-switch">
+                        <input type="checkbox" checked />
+                        <span class="slider"></span>
+                      </label>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm">Error Notifications</span>
+                      <label class="toggle-switch">
+                        <input type="checkbox" checked />
+                        <span class="slider"></span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Workflow Builder -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <!-- Workflow Toolbox -->
+            <div class="bg-white rounded-lg shadow-sm border">
+              <div class="p-4 border-b">
+                <h2 class="font-semibold text-gray-900">Workflow Components</h2>
+                <p class="text-sm text-gray-600">
+                  Drag & drop to build your workflow
+                </p>
+              </div>
+
+              <div class="p-4">
+                <div class="mb-4">
+                  <h3
+                    class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2"
+                  >
+                    Triggers
+                  </h3>
+                  <div class="space-y-2">
+                    <div
+                      class="workflow-toolbox-item p-3 bg-purple-50 border border-purple-200 rounded-md"
+                    >
+                      <div class="flex items-center">
+                        <i class="fas fa-bolt text-purple-600 mr-2"></i>
+                        <span class="text-sm font-medium">Webhook Trigger</span>
+                      </div>
+                      <p class="text-xs text-gray-600 mt-1">
+                        Trigger on incoming webhook
+                      </p>
+                    </div>
+                    <div
+                      class="workflow-toolbox-item p-3 bg-purple-50 border border-purple-200 rounded-md"
+                    >
+                      <div class="flex items-center">
+                        <i class="fas fa-clock text-purple-600 mr-2"></i>
+                        <span class="text-sm font-medium"
+                          >Schedule Trigger</span
+                        >
+                      </div>
+                      <p class="text-xs text-gray-600 mt-1">
+                        Run at scheduled intervals
+                      </p>
+                    </div>
+                    <div
+                      class="workflow-toolbox-item p-3 bg-purple-50 border border-purple-200 rounded-md"
+                    >
+                      <div class="flex items-center">
+                        <i class="fas fa-database text-purple-600 mr-2"></i>
+                        <span class="text-sm font-medium"
+                          >Data Change Trigger</span
+                        >
+                      </div>
+                      <p class="text-xs text-gray-600 mt-1">
+                        Trigger on data changes
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mb-4">
+                  <h3
+                    class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2"
+                  >
+                    Conditions
+                  </h3>
+                  <div class="space-y-2">
+                    <div
+                      class="workflow-toolbox-item p-3 bg-yellow-50 border border-yellow-200 rounded-md"
+                    >
+                      <div class="flex items-center">
+                        <i class="fas fa-code-branch text-yellow-600 mr-2"></i>
+                        <span class="text-sm font-medium"
+                          >If-Else Condition</span
+                        >
+                      </div>
+                      <p class="text-xs text-gray-600 mt-1">
+                        Branch based on conditions
+                      </p>
+                    </div>
+                    <div
+                      class="workflow-toolbox-item p-3 bg-yellow-50 border border-yellow-200 rounded-md"
+                    >
+                      <div class="flex items-center">
+                        <i class="fas fa-filter text-yellow-600 mr-2"></i>
+                        <span class="text-sm font-medium">Data Filter</span>
+                      </div>
+                      <p class="text-xs text-gray-600 mt-1">
+                        Filter data based on criteria
+                      </p>
+                    </div>
+                    <div
+                      class="workflow-toolbox-item p-3 bg-yellow-50 border border-yellow-200 rounded-md"
+                    >
+                      <div class="flex items-center">
+                        <i class="fas fa-check-double text-yellow-600 mr-2"></i>
+                        <span class="text-sm font-medium">Validation Rule</span>
+                      </div>
+                      <p class="text-xs text-gray-600 mt-1">
+                        Validate data against rules
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mb-4">
+                  <h3
+                    class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2"
+                  >
+                    Actions
+                  </h3>
+                  <div class="space-y-2">
+                    <div
+                      class="workflow-toolbox-item p-3 bg-blue-50 border border-blue-200 rounded-md"
+                    >
+                      <div class="flex items-center">
+                        <i
+                          class="fas fa-cloud-upload-alt text-blue-600 mr-2"
+                        ></i>
+                        <span class="text-sm font-medium">API Request</span>
+                      </div>
+                      <p class="text-xs text-gray-600 mt-1">
+                        Make API call to external system
+                      </p>
+                    </div>
+                    <div
+                      class="workflow-toolbox-item p-3 bg-blue-50 border border-blue-200 rounded-md"
+                    >
+                      <div class="flex items-center">
+                        <i class="fas fa-exchange-alt text-blue-600 mr-2"></i>
+                        <span class="text-sm font-medium">Data Transform</span>
+                      </div>
+                      <p class="text-xs text-gray-600 mt-1">
+                        Transform data format
+                      </p>
+                    </div>
+                    <div
+                      class="workflow-toolbox-item p-3 bg-blue-50 border border-blue-200 rounded-md"
+                    >
+                      <div class="flex items-center">
+                        <i class="fas fa-envelope text-blue-600 mr-2"></i>
+                        <span class="text-sm font-medium"
+                          >Send Notification</span
+                        >
+                      </div>
+                      <p class="text-xs text-gray-600 mt-1">
+                        Send email or notification
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3
+                    class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2"
+                  >
+                    Error Handling
+                  </h3>
+                  <div class="space-y-2">
+                    <div
+                      class="workflow-toolbox-item p-3 bg-red-50 border border-red-200 rounded-md"
+                    >
+                      <div class="flex items-center">
+                        <i
+                          class="fas fa-exclamation-triangle text-red-600 mr-2"
+                        ></i>
+                        <span class="text-sm font-medium">Error Handler</span>
+                      </div>
+                      <p class="text-xs text-gray-600 mt-1">
+                        Handle errors and exceptions
+                      </p>
+                    </div>
+                    <div
+                      class="workflow-toolbox-item p-3 bg-red-50 border border-red-200 rounded-md"
+                    >
+                      <div class="flex items-center">
+                        <i class="fas fa-sync-alt text-red-600 mr-2"></i>
+                        <span class="text-sm font-medium">Retry Logic</span>
+                      </div>
+                      <p class="text-xs text-gray-600 mt-1">
+                        Configure retry attempts
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Workflow Canvas -->
+            <div
+              class="bg-white rounded-lg shadow-sm border col-span-3 relative overflow-hidden"
+              style="min-height: 600px"
+            >
+              <div class="p-4 border-b flex justify-between items-center">
+                <h2 class="font-semibold text-gray-900">Workflow Canvas</h2>
+                <div class="flex space-x-2">
+                  <button class="text-sm text-gray-600 flex items-center">
+                    <i class="fas fa-search-plus mr-1"></i> Zoom
+                  </button>
+                  <button class="text-sm text-gray-600 flex items-center">
+                    <i class="fas fa-undo mr-1"></i> Undo
+                  </button>
+                  <button class="text-sm text-gray-600 flex items-center">
+                    <i class="fas fa-trash-alt mr-1"></i> Clear
+                  </button>
+                </div>
+              </div>
+
+              <div class="p-8 relative">
+                <!-- Workflow Nodes -->
+                <!-- Trigger Node -->
+                <div
+                  class="workflow-node trigger absolute bg-white rounded-lg shadow-sm border p-4"
+                  style="top: 20px; left: 200px; width: 280px"
+                >
+                  <div class="flex justify-between items-start">
+                    <div class="flex items-center">
+                      <div
+                        class="w-8 h-8 bg-purple-100 rounded-md flex items-center justify-center mr-3"
+                      >
+                        <i class="fas fa-bolt text-purple-600"></i>
+                      </div>
+                      <div>
+                        <div class="font-medium">Webhook Trigger</div>
+                        <div class="text-xs text-gray-500">
+                          Shopify - New Order
+                        </div>
+                      </div>
+                    </div>
+                    <button class="text-gray-400 hover:text-gray-500">
+                      <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                  </div>
+                  <div class="mt-3 text-sm">
+                    <div class="flex items-center text-gray-600">
+                      <i class="fas fa-link text-xs mr-2"></i>
+                      <span>https://alumio.app/webhook/shopify-orders</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Connector 1 -->
+                <div
+                  class="workflow-connector active"
+                  style="top: 100px; left: 340px; height: 80px"
+                ></div>
+
+                <!-- Condition Node -->
+                <div
+                  class="workflow-node condition absolute bg-white rounded-lg shadow-sm border p-4"
+                  style="top: 180px; left: 200px; width: 280px"
+                >
+                  <div class="flex justify-between items-start">
+                    <div class="flex items-center">
+                      <div
+                        class="w-8 h-8 bg-yellow-100 rounded-md flex items-center justify-center mr-3"
+                      >
+                        <i class="fas fa-code-branch text-yellow-600"></i>
+                      </div>
+                      <div>
+                        <div class="font-medium">Check Payment Status</div>
+                        <div class="text-xs text-gray-500">
+                          If-Else Condition
+                        </div>
+                      </div>
+                    </div>
+                    <button class="text-gray-400 hover:text-gray-500">
+                      <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                  </div>
+                  <div class="mt-3 text-sm">
+                    <div
+                      class="p-2 bg-gray-50 rounded border font-mono text-xs"
+                    >
+                      order.financial_status === "paid"
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Yes Path Label -->
+                <div class="condition-path yes" style="top: 280px; left: 380px">
+                  <i class="fas fa-check mr-1"></i> Yes
+                </div>
+
+                <!-- No Path Label -->
+                <div class="condition-path no" style="top: 280px; left: 200px">
+                  <i class="fas fa-times mr-1"></i> No
+                </div>
+
+                <!-- Connector 2 (Yes Path) -->
+                <div
+                  class="workflow-connector condition-yes"
+                  style="top: 260px; left: 340px; height: 80px"
+                ></div>
+
+                <!-- Connector 3 (No Path) -->
+                <div
+                  class="workflow-connector condition-no"
+                  style="top: 260px; left: 240px; height: 80px"
+                ></div>
+
+                <!-- Action Node 1 (Yes Path) -->
+                <div
+                  class="workflow-node action absolute bg-white rounded-lg shadow-sm border p-4"
+                  style="top: 340px; left: 300px; width: 280px"
+                >
+                  <div class="flex justify-between items-start">
+                    <div class="flex items-center">
+                      <div
+                        class="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center mr-3"
+                      >
+                        <i class="fas fa-cloud-upload-alt text-blue-600"></i>
+                      </div>
+                      <div>
+                        <div class="font-medium">Send Order to SAP</div>
+                        <div class="text-xs text-gray-500">API Request</div>
+                      </div>
+                    </div>
+                    <button class="text-gray-400 hover:text-gray-500">
+                      <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                  </div>
+                  <div class="mt-3 text-sm">
+                    <div class="flex items-center text-gray-600 mb-1">
+                      <span
+                        class="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded mr-2"
+                        >POST</span
+                      >
+                      <span>/api/v1/orders</span>
+                    </div>
+                    <div class="text-xs text-gray-500">
+                      Create new order in SAP ERP
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Action Node 2 (No Path) -->
+                <div
+                  class="workflow-node action absolute bg-white rounded-lg shadow-sm border p-4"
+                  style="top: 340px; left: 0px; width: 280px"
+                >
+                  <div class="flex justify-between items-start">
+                    <div class="flex items-center">
+                      <div
+                        class="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center mr-3"
+                      >
+                        <i class="fas fa-clock text-blue-600"></i>
+                      </div>
+                      <div>
+                        <div class="font-medium">Schedule Retry</div>
+                        <div class="text-xs text-gray-500">Delay Action</div>
+                      </div>
+                    </div>
+                    <button class="text-gray-400 hover:text-gray-500">
+                      <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                  </div>
+                  <div class="mt-3 text-sm">
+                    <div class="text-xs text-gray-600">
+                      Wait for 2 hours and retry workflow
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Connector 4 -->
+                <div
+                  class="workflow-connector active"
+                  style="top: 420px; left: 440px; height: 80px"
+                ></div>
+
+                <!-- Action Node 3 -->
+                <div
+                  class="workflow-node action absolute bg-white rounded-lg shadow-sm border p-4"
+                  style="top: 500px; left: 300px; width: 280px"
+                >
+                  <div class="flex justify-between items-start">
+                    <div class="flex items-center">
+                      <div
+                        class="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center mr-3"
+                      >
+                        <i class="fas fa-exchange-alt text-blue-600"></i>
+                      </div>
+                      <div>
+                        <div class="font-medium">Update Shopify Status</div>
+                        <div class="text-xs text-gray-500">API Request</div>
+                      </div>
+                    </div>
+                    <button class="text-gray-400 hover:text-gray-500">
+                      <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                  </div>
+                  <div class="mt-3 text-sm">
+                    <div class="flex items-center text-gray-600 mb-1">
+                      <span
+                        class="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded mr-2"
+                        >PUT</span
+                      >
+                      <span>/orders/{id}</span>
+                    </div>
+                    <div class="text-xs text-gray-500">
+                      Update order status in Shopify
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Error Handler -->
+                <div
+                  class="workflow-node error absolute bg-white rounded-lg shadow-sm border p-4"
+                  style="top: 420px; left: 600px; width: 280px"
+                >
+                  <div class="flex justify-between items-start">
+                    <div class="flex items-center">
+                      <div
+                        class="w-8 h-8 bg-red-100 rounded-md flex items-center justify-center mr-3"
+                      >
+                        <i class="fas fa-exclamation-triangle text-red-600"></i>
+                      </div>
+                      <div>
+                        <div class="font-medium">Error Handler</div>
+                        <div class="text-xs text-gray-500">
+                          Handle API Errors
+                        </div>
+                      </div>
+                    </div>
+                    <button class="text-gray-400 hover:text-gray-500">
+                      <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                  </div>
+                  <div class="mt-3 text-sm">
+                    <div class="text-xs text-gray-600 mb-1">
+                      Auto-retry: 3 attempts
+                    </div>
+                    <div class="text-xs text-gray-600">
+                      Send notification on failure
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Connector to Error Handler -->
+                <div
+                  class="workflow-connector"
+                  style="
+                    top: 380px;
+                    left: 440px;
+                    height: 40px;
+                    transform: rotate(90deg);
+                    transform-origin: left top;
+                    width: 160px;
+                  "
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Workflow Configuration -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <!-- Trigger Configuration -->
+            <div class="bg-white rounded-lg shadow-sm border">
+              <div class="p-4 border-b">
+                <h2 class="font-semibold text-gray-900">
+                  Trigger Configuration
+                </h2>
+                <p class="text-sm text-gray-600">
+                  Configure how the workflow is triggered
+                </p>
+              </div>
+
+              <div class="p-4">
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1"
+                      >Trigger Type</label
+                    >
+                    <select class="w-full border rounded-md px-3 py-2">
+                      <option selected>Webhook (Real-time)</option>
+                      <option>Scheduled (Batch)</option>
+                      <option>Manual Trigger</option>
+                      <option>Data Change</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1"
+                      >Webhook URL</label
+                    >
+                    <div class="flex">
+                      <input
+                        type="text"
+                        value="https://alumio.app/webhook/shopify-orders"
+                        class="flex-1 border rounded-l-md px-3 py-2"
+                        readonly
+                      />
+                      <button
+                        class="bg-gray-100 border border-l-0 rounded-r-md px-3 py-2"
+                      >
+                        <i class="fas fa-copy"></i>
+                      </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">
+                      Use this URL in your Shopify webhook settings
+                    </p>
+                  </div>
+
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1"
+                      >Event Type</label
+                    >
+                    <select class="w-full border rounded-md px-3 py-2">
+                      <option selected>Order Created</option>
+                      <option>Order Updated</option>
+                      <option>Order Cancelled</option>
+                      <option>Order Paid</option>
+                      <option>Order Fulfilled</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1"
+                      >Data Format</label
+                    >
+                    <select class="w-full border rounded-md px-3 py-2">
+                      <option selected>JSON</option>
+                      <option>XML</option>
+                      <option>Form Data</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="flex items-center">
+                      <input type="checkbox" checked class="mr-2" />
+                      <span class="text-sm"
+                        >Verify Shopify webhook signature</span
+                      >
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Scheduling Configuration -->
+            <div class="bg-white rounded-lg shadow-sm border">
+              <div class="p-4 border-b">
+                <h2 class="font-semibold text-gray-900">
+                  Scheduling & Batch Processing
+                </h2>
+                <p class="text-sm text-gray-600">
+                  Configure scheduled execution options
+                </p>
+              </div>
+
+              <div class="p-4">
+                <div class="space-y-4">
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium"
+                      >Enable Scheduled Processing</span
+                    >
+                    <label class="toggle-switch">
+                      <input type="checkbox" />
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1"
+                      >Schedule Frequency</label
+                    >
+                    <select class="w-full border rounded-md px-3 py-2" disabled>
+                      <option>Every 15 minutes</option>
+                      <option>Hourly</option>
+                      <option selected>Daily</option>
+                      <option>Weekly</option>
+                      <option>Monthly</option>
+                      <option>Custom</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1"
+                      >Run Time</label
+                    >
+                    <input
+                      type="time"
+                      class="w-full border rounded-md px-3 py-2"
+                      value="02:00"
+                      disabled
+                    />
+                    <p class="text-xs text-gray-500 mt-1">
+                      Time is in your local timezone
+                    </p>
+                  </div>
+
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1"
+                      >Batch Size</label
+                    >
+                    <input
+                      type="number"
+                      class="w-full border rounded-md px-3 py-2"
+                      value="100"
+                      disabled
+                    />
+                    <p class="text-xs text-gray-500 mt-1">
+                      Maximum number of records to process in one batch
+                    </p>
+                  </div>
+
+                  <div>
+                    <label class="flex items-center">
+                      <input type="checkbox" checked disabled class="mr-2" />
+                      <span class="text-sm"
+                        >Process only new records since last run</span
+                      >
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Error Handling Configuration -->
+          <div class="bg-white rounded-lg shadow-sm border mb-6">
+            <div class="p-4 border-b">
+              <h2 class="font-semibold text-gray-900">
+                Error Handling & Recovery
+              </h2>
+              <p class="text-sm text-gray-600">
+                Configure how errors are handled in the workflow
+              </p>
+            </div>
+
+            <div class="p-4">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Retry Settings -->
+                <div>
+                  <h3 class="text-sm font-medium text-gray-700 mb-3">
+                    Retry Settings
+                  </h3>
+                  <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm">Auto-retry on Failure</span>
+                      <label class="toggle-switch">
+                        <input type="checkbox" checked />
+                        <span class="slider"></span>
+                      </label>
+                    </div>
+
+                    <div>
+                      <label class="block text-sm text-gray-600 mb-1"
+                        >Retry Attempts</label
+                      >
+                      <select
+                        class="w-full border rounded-md px-3 py-2 text-sm"
+                      >
+                        <option>1</option>
+                        <option>2</option>
+                        <option selected>3</option>
+                        <option>5</option>
+                        <option>10</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label class="block text-sm text-gray-600 mb-1"
+                        >Retry Delay</label
+                      >
+                      <select
+                        class="w-full border rounded-md px-3 py-2 text-sm"
+                      >
+                        <option>30 seconds</option>
+                        <option selected>5 minutes</option>
+                        <option>15 minutes</option>
+                        <option>30 minutes</option>
+                        <option>1 hour</option>
+                        <option>2 hours</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label class="block text-sm text-gray-600 mb-1"
+                        >Retry Strategy</label
+                      >
+                      <select
+                        class="w-full border rounded-md px-3 py-2 text-sm"
+                      >
+                        <option selected>Fixed Interval</option>
+                        <option>Exponential Backoff</option>
+                        <option>Custom</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Error Notifications -->
+                <div>
+                  <h3 class="text-sm font-medium text-gray-700 mb-3">
+                    Error Notifications
+                  </h3>
+                  <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm">Send Notifications</span>
+                      <label class="toggle-switch">
+                        <input type="checkbox" checked />
+                        <span class="slider"></span>
+                      </label>
+                    </div>
+
+                    <div>
+                      <label class="block text-sm text-gray-600 mb-1"
+                        >Notification Channels</label
+                      >
+                      <div class="space-y-2">
+                        <label class="flex items-center">
+                          <input type="checkbox" checked class="mr-2" />
+                          <span class="text-sm">Email</span>
+                        </label>
+                        <label class="flex items-center">
+                          <input type="checkbox" checked class="mr-2" />
+                          <span class="text-sm">Slack</span>
+                        </label>
+                        <label class="flex items-center">
+                          <input type="checkbox" class="mr-2" />
+                          <span class="text-sm">Webhook</span>
+                        </label>
+                        <label class="flex items-center">
+                          <input type="checkbox" checked class="mr-2" />
+                          <span class="text-sm">In-app Notification</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label class="block text-sm text-gray-600 mb-1"
+                        >Notification Threshold</label
+                      >
+                      <select
+                        class="w-full border rounded-md px-3 py-2 text-sm"
+                      >
+                        <option>Every Error</option>
+                        <option selected>After Final Retry</option>
+                        <option>Custom</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Error Logging -->
+                <div>
+                  <h3 class="text-sm font-medium text-gray-700 mb-3">
+                    Error Logging
+                  </h3>
+                  <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm">Detailed Error Logging</span>
+                      <label class="toggle-switch">
+                        <input type="checkbox" checked />
+                        <span class="slider"></span>
+                      </label>
+                    </div>
+
+                    <div>
+                      <label class="block text-sm text-gray-600 mb-1"
+                        >Log Level</label
+                      >
+                      <select
+                        class="w-full border rounded-md px-3 py-2 text-sm"
+                      >
+                        <option>Info</option>
+                        <option>Warning</option>
+                        <option selected>Error</option>
+                        <option>Debug</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label class="block text-sm text-gray-600 mb-1"
+                        >Log Retention</label
+                      >
+                      <select
+                        class="w-full border rounded-md px-3 py-2 text-sm"
+                      >
+                        <option>7 days</option>
+                        <option>14 days</option>
+                        <option selected>30 days</option>
+                        <option>90 days</option>
+                        <option>1 year</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label class="flex items-center">
+                        <input type="checkbox" checked class="mr-2" />
+                        <span class="text-sm"
+                          >Include request/response payloads</span
+                        >
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- Right Sidebar -->
+      <aside class="w-72 border-l bg-white overflow-y-auto">
+        <div class="p-4">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="font-medium">Node Properties</h3>
+            <button class="text-purple-800 font-medium">Apply</button>
+          </div>
+
+          <div class="mb-6">
+            <div class="text-xl font-medium">Check Payment Status</div>
+            <div class="text-sm text-gray-600 mb-2">If-Else Condition</div>
+            <div class="flex space-x-2 mb-4">
+              <span class="status-badge active">
+                <i class="fas fa-circle text-xs mr-1"></i> Active
+              </span>
+            </div>
+          </div>
+
+          <div class="mb-6">
+            <h3 class="font-medium mb-4">Condition Settings</h3>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >Condition Type</label
+                >
+                <select class="w-full border rounded-md px-3 py-2">
+                  <option selected>Simple Condition</option>
+                  <option>Advanced Expression</option>
+                  <option>Multiple Conditions (AND)</option>
+                  <option>Multiple Conditions (OR)</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >Field</label
+                >
+                <select class="w-full border rounded-md px-3 py-2">
+                  <option>order.id</option>
+                  <option>order.customer_email</option>
+                  <option selected>order.financial_status</option>
+                  <option>order.total_price</option>
+                  <option>order.created_at</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >Operator</label
+                >
+                <select class="w-full border rounded-md px-3 py-2">
+                  <option>equals (==)</option>
+                  <option selected>strict equals (===)</option>
+                  <option>not equals (!=)</option>
+                  <option>greater than (>)</option>
+                  <option>less than (<)</option>
+                  <option>contains</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >Value</label
+                >
+                <input
+                  type="text"
+                  class="w-full border rounded-md px-3 py-2"
+                  value="paid"
+                />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >Expression</label
+                >
+                <div class="p-2 bg-gray-50 rounded border font-mono text-xs">
+                  order.financial_status === "paid"
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-6">
+            <h3 class="font-medium mb-4">Path Configuration</h3>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >If Condition is True</label
+                >
+                <select class="w-full border rounded-md px-3 py-2">
+                  <option selected>Send Order to SAP</option>
+                  <option>Schedule Retry</option>
+                  <option>Update Shopify Status</option>
+                  <option>Error Handler</option>
+                  <option>+ Add New Action</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >If Condition is False</label
+                >
+                <select class="w-full border rounded-md px-3 py-2">
+                  <option>Send Order to SAP</option>
+                  <option selected>Schedule Retry</option>
+                  <option>Update Shopify Status</option>
+                  <option>Error Handler</option>
+                  <option>+ Add New Action</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-6">
+            <h3 class="font-medium mb-4">Advanced Settings</h3>
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-sm">Enable Logging</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" checked />
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <span class="text-sm">Skip on Error</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" />
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >Description</label
+                >
+                <textarea
+                  class="w-full border rounded-md px-3 py-2 text-sm"
+                  rows="3"
+                >
+Check if the order has been paid before sending to SAP. If not paid, schedule a retry after 2 hours.</textarea
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <script>
+      // Make sidebar items interactive
+      document.addEventListener("DOMContentLoaded", function () {
+        // Toggle sidebar items
+        const sidebarItems = document.querySelectorAll(".sidebar-item");
+        sidebarItems.forEach((item) => {
+          if (
+            item.querySelector(".expanded-icon") ||
+            item.querySelector(".fa-chevron-right")
+          ) {
+            item.addEventListener("click", function () {
+              const icon =
+                this.querySelector(".expanded-icon") ||
+                this.querySelector(".fa-chevron-right");
+              const submenu = this.nextElementSibling;
+
+              if (icon.classList.contains("expanded-icon")) {
+                icon.classList.toggle("expanded-icon");
+              } else {
+                icon.classList.add("expanded-icon");
+              }
+
+              if (submenu && submenu.classList.contains("sidebar-submenu")) {
+                submenu.style.display =
+                  submenu.style.display === "none" ? "block" : "none";
+              }
+            });
+          }
+        });
+
+        // Make narrow sidebar items interactive
+        const narrowSidebarItems = document.querySelectorAll(
+          ".narrow-sidebar-item"
+        );
+        narrowSidebarItems.forEach((item) => {
+          item.addEventListener("click", function () {
+            narrowSidebarItems.forEach((i) => i.classList.remove("active"));
+            this.classList.add("active");
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

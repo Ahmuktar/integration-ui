@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Logflow Interface</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .connection-line {
+        stroke-dasharray: 5, 5;
+        stroke: #666;
+      }
+      .flow-node {
+        transition: transform 0.2s;
+        cursor: move;
+        z-index: 10;
+      }
+      .flow-node:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      .sidebar-item {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      .sidebar-item:hover {
+        background-color: rgba(107, 33, 168, 0.1);
+      }
+      .sidebar-item.active {
+        background-color: rgba(107, 33, 168, 0.1);
+      }
+      .sidebar-item i {
+        width: 20px;
+        text-align: center;
+        margin-right: 10px;
+      }
+      .sidebar-submenu {
+        margin-left: 20px;
+      }
+      .expanded-icon {
+        transform: rotate(90deg);
+      }
+      .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 40px;
+        height: 20px;
+      }
+      .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.4s;
+        border-radius: 34px;
+      }
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 2px;
+        bottom: 2px;
+        background-color: white;
+        transition: 0.4s;
+        border-radius: 50%;
+      }
+      input:checked + .slider {
+        background-color: #8b5cf6;
+      }
+      input:checked + .slider:before {
+        transform: translateX(20px);
+      }
+      .code-editor {
+        font-family: monospace;
+        background-color: white;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .code-line {
+        display: flex;
+      }
+      .line-number {
+        width: 30px;
+        text-align: right;
+        padding-right: 10px;
+        color: #888;
+        user-select: none;
+      }
+      .line-content {
+        flex: 1;
+      }
+      .keyword {
+        color: #8b5cf6;
+      }
+      .string {
+        color: #16a34a;
+      }
+      .function {
+        color: #2563eb;
+      }
+      .narrow-sidebar-item {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6b7280;
+        border-radius: 8px;
+        margin: 8px 0;
+        cursor: pointer;
+        transition: background-color 0.2s, color 0.2s;
+      }
+      .narrow-sidebar-item:hover {
+        background-color: rgba(107, 33, 168, 0.1);
+        color: #8b5cf6;
+      }
+      .narrow-sidebar-item.active {
+        background-color: rgba(107, 33, 168, 0.1);
+        color: #8b5cf6;
+      }
+      .notification-badge {
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        width: 14px;
+        height: 14px;
+        background-color: #ef4444;
+        border-radius: 50%;
+        font-size: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50">
+    <!-- Header -->
+    <header
+      class="bg-purple-800 text-white p-2 flex items-center justify-between"
+    >
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-2 px-2">
+          <div class="flex items-center">
+            <img
+              src="/placeholder.svg?height=24&width=24"
+              alt="Ahmadio Logo"
+              class="h-6 w-6"
+            />
+            <span class="ml-2 font-medium">Ahmadio</span>
+          </div>
+        </div>
+        <div class="flex space-x-2">
+          <button
+            class="px-3 py-1 bg-purple-700 rounded-md flex items-center text-sm"
+          >
+            <span class="w-2 h-2 bg-white rounded-full mr-2"></span>
+            Doc-data work
+            <i class="fas fa-times ml-2"></i>
+          </button>
+          <button
+            class="px-3 py-1 bg-purple-700 rounded-md flex items-center text-sm"
+          >
+            <span class="w-2 h-2 bg-white rounded-full mr-2"></span>
+            Pre-builded flow
+          </button>
+          <button
+            class="px-3 py-1 bg-purple-700 rounded-md flex items-center text-sm"
+          >
+            <span class="w-2 h-2 bg-white rounded-full mr-2"></span>
+            Customer funnel
+          </button>
+          <button
+            class="px-2 py-1 bg-purple-700 rounded-md flex items-center text-sm"
+          >
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+      </div>
+      <div class="flex items-center space-x-4">
+        <button class="p-2"><i class="fas fa-question-circle"></i></button>
+        <button class="p-2"><i class="fas fa-share"></i></button>
+        <button class="p-2"><i class="fas fa-shield"></i></button>
+        <div class="border-l border-purple-600 h-6 mx-2"></div>
+        <button class="p-2"><i class="fas fa-ellipsis-h"></i></button>
+      </div>
+    </header>
+
+    <!-- Main Navigation -->
+    <nav class="bg-white border-b flex items-center px-4 py-2">
+      <div class="flex space-x-6">
+        <a href="#" class="text-purple-800 font-medium">OBJECTIVES</a>
+        <a href="#" class="text-gray-600">ASSETS</a>
+        <span class="text-gray-400 border rounded px-2 ml-2">1</span>
+      </div>
+      <div class="ml-auto flex items-center space-x-4">
+        <a href="#" class="text-gray-600">SETTINGS</a>
+        <a href="#" class="text-gray-600">LAUNCH</a>
+        <a href="#" class="text-gray-600">INSPECT</a>
+      </div>
+    </nav>
+
+    <div class="flex h-[calc(100vh-120px)]">
+      <!-- Narrow Icon Sidebar -->
+      <aside class="w-14 bg-white border-r flex flex-col items-center py-4">
+        <div class="flex-1 flex flex-col items-center">
+          <div class="narrow-sidebar-item active">
+            <i class="fas fa-th-large"></i>
+          </div>
+          <div class="narrow-sidebar-item">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <div class="narrow-sidebar-item">
+            <i class="fas fa-credit-card"></i>
+          </div>
+          <div class="narrow-sidebar-item relative">
+            <i class="fas fa-user"></i>
+            <span class="notification-badge">1</span>
+          </div>
+          <div class="narrow-sidebar-item">
+            <i class="fas fa-folder"></i>
+          </div>
+        </div>
+        <div class="mt-auto">
+          <div class="narrow-sidebar-item">
+            <i class="fas fa-bell"></i>
+          </div>
+          <div class="narrow-sidebar-item">
+            <i class="fas fa-cog"></i>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Left Sidebar -->
+      <aside class="w-64 border-r bg-white overflow-y-auto">
+        <div class="p-4">
+          <div class="relative mb-4">
+            <input
+              type="text"
+              placeholder="Find..."
+              class="w-full pl-10 pr-4 py-2 border rounded-md"
+            />
+            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+          </div>
+
+          <div class="space-y-1">
+            <!-- Sidebar items -->
+            <div class="sidebar-item">
+              <i class="fas fa-folder text-gray-500"></i>
+              <span>Campilation</span>
+            </div>
+
+            <div class="sidebar-item">
+              <i class="fas fa-cube text-gray-500"></i>
+              <span>Basic</span>
+            </div>
+
+            <div class="sidebar-item active">
+              <i class="fas fa-chevron-right expanded-icon text-gray-500"></i>
+              <span>Redirections</span>
+            </div>
+
+            <div class="sidebar-submenu ml-6 space-y-1">
+              <div class="sidebar-item">
+                <i class="fas fa-code text-gray-500"></i>
+                <span>Prescribing</span>
+                <i class="fas fa-ellipsis-h ml-auto text-gray-400"></i>
+              </div>
+
+              <div class="sidebar-item">
+                <i class="fas fa-exchange-alt text-gray-500"></i>
+                <span>Swapping</span>
+                <i class="fas fa-ellipsis-h ml-auto text-gray-400"></i>
+              </div>
+
+              <div class="sidebar-item">
+                <i class="fas fa-th-large text-gray-500"></i>
+                <span>Building blocks</span>
+                <i class="fas fa-ellipsis-h ml-auto text-gray-400"></i>
+              </div>
+
+              <div class="sidebar-item">
+                <i class="fas fa-magnet text-gray-500"></i>
+                <span>Magnet link</span>
+                <i class="fas fa-ellipsis-h ml-auto text-gray-400"></i>
+              </div>
+
+              <div class="sidebar-item">
+                <i class="fas fa-bullseye text-gray-500"></i>
+                <span>Retargeting</span>
+                <i class="fas fa-ellipsis-h ml-auto text-gray-400"></i>
+              </div>
+            </div>
+
+            <div class="sidebar-item">
+              <i class="fas fa-phone text-gray-500"></i>
+              <span>Telephony</span>
+            </div>
+
+            <div class="sidebar-item">
+              <i class="fas fa-code text-gray-500"></i>
+              <span>Coding</span>
+            </div>
+
+            <div class="sidebar-item active">
+              <i class="fas fa-chevron-right expanded-icon text-gray-500"></i>
+              <span>File managing</span>
+            </div>
+
+            <div class="sidebar-submenu ml-6 space-y-1">
+              <div class="sidebar-item">
+                <i class="fas fa-file-alt text-gray-500"></i>
+                <span>Primary entry</span>
+                <i class="fas fa-ellipsis-h ml-auto text-gray-400"></i>
+              </div>
+
+              <div class="sidebar-item">
+                <i class="fas fa-chart-bar text-gray-500"></i>
+                <span>File analysis</span>
+                <i class="fas fa-ellipsis-h ml-auto text-gray-400"></i>
+              </div>
+
+              <div class="sidebar-item">
+                <i class="fas fa-paperclip text-gray-500"></i>
+                <span>Attachment</span>
+                <i class="fas fa-ellipsis-h ml-auto text-gray-400"></i>
+              </div>
+
+              <div class="sidebar-item">
+                <i class="fas fa-plus-square text-gray-500"></i>
+                <span>Creating request</span>
+                <i class="fas fa-ellipsis-h ml-auto text-gray-400"></i>
+              </div>
+            </div>
+
+            <div class="sidebar-item">
+              <i class="fas fa-handshake text-gray-500"></i>
+              <span>Settlement</span>
+            </div>
+
+            <div class="sidebar-item">
+              <i class="fas fa-exclamation-triangle text-gray-500"></i>
+              <span>Violations</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="flex-1 p-4 relative overflow-hidden" id="flowchart">
+        <!-- SVG for connection lines -->
+        <svg
+          id="connections"
+          class="absolute top-0 left-0 w-full h-full pointer-events-none"
+        >
+          <!-- Connection lines will be added here via JavaScript -->
+        </svg>
+
+        <!-- Flowchart nodes will be added here via JavaScript -->
+      </main>
+
+      <!-- Right Sidebar -->
+      <aside class="w-72 border-l bg-white overflow-y-auto">
+        <div class="p-4">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="font-medium">Storage</h3>
+            <button class="text-purple-800 font-medium">Upgrade</button>
+          </div>
+
+          <div class="mb-6">
+            <div class="text-xl font-medium">65.6 GB</div>
+            <div class="text-sm text-gray-600 mb-2">Used from 100 GB</div>
+            <div class="bg-gray-200 rounded-full h-2 mb-4">
+              <div class="bg-purple-600 h-2 rounded-full w-2/3"></div>
+            </div>
+
+            <div class="flex justify-between text-sm">
+              <div>
+                <div class="font-medium">42.6 GB</div>
+                <div class="text-gray-600">Uploaded</div>
+              </div>
+              <div>
+                <div class="font-medium">31.8 GB</div>
+                <div class="text-gray-600">Reserved</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-6">
+            <h3 class="font-medium mb-4">Notifications</h3>
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span>System</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" checked />
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="flex items-center justify-between">
+                <span>Procedural</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" checked />
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="flex items-center justify-between">
+                <span>New tickets</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" checked />
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="flex items-center justify-between">
+                <span>Server</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" />
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="flex items-center justify-between">
+                <span>Storage</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" />
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-6">
+            <div class="flex items-center justify-between mb-2">
+              <span>System sounds</span>
+              <span>40%</span>
+            </div>
+            <input type="range" class="w-full" value="40" />
+          </div>
+
+          <div class="mb-6">
+            <h3 class="font-medium mb-4">Opened lines</h3>
+            <div class="space-y-2">
+              <div class="flex items-center">
+                <span
+                  class="w-4 h-4 rounded-full bg-gray-200 flex items-center justify-center mr-2"
+                >
+                  <span class="w-2 h-2 rounded-full bg-purple-600"></span>
+                </span>
+                <span>Direct only</span>
+              </div>
+              <div class="flex items-center">
+                <span class="w-4 h-4 rounded-full bg-purple-600 mr-2"></span>
+                <span>Diverted</span>
+              </div>
+              <div class="flex items-center">
+                <span class="w-4 h-4 rounded-full bg-gray-200 mr-2"></span>
+                <span>Deferred</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-6">
+            <h3 class="font-medium mb-4">Requests</h3>
+            <div class="space-y-2">
+              <div class="flex items-center">
+                <input type="checkbox" class="mr-2" />
+                <span>Breakdowns</span>
+              </div>
+              <div class="flex items-center">
+                <input type="checkbox" class="mr-2" />
+                <span>Direct</span>
+              </div>
+              <div class="flex items-center">
+                <input type="checkbox" checked class="mr-2" />
+                <span>Phone calls</span>
+              </div>
+              <div class="flex items-center">
+                <input type="checkbox" class="mr-2" />
+                <span>Of other operators</span>
+              </div>
+              <div class="flex items-center">
+                <input type="checkbox" checked class="mr-2" />
+                <span>Emailing</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Code Editor Section -->
+    <div
+      class="fixed bottom-0 left-0 right-0 bg-white border-t shadow-md"
+      style="height: 150px; display: none"
+      id="codeEditor"
+    >
+      <div class="flex justify-between items-center p-2 bg-gray-100 border-b">
+        <div class="flex items-center">
+          <span class="font-medium mr-4">Initial boost coding</span>
+          <span class="bg-gray-200 px-2 py-1 rounded text-xs mr-2">JS</span>
+          <span class="bg-gray-200 px-2 py-1 rounded text-xs">PN</span>
+        </div>
+        <button class="text-gray-500" id="closeEditor">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="p-4 code-editor h-full overflow-y-auto">
+        <div class="code-line">
+          <div class="line-number">1</div>
+          <div class="line-content">
+            <span class="keyword">import</span> React
+            <span class="keyword">from</span>
+            <span class="string">'react'</span>;
+          </div>
+        </div>
+        <div class="code-line">
+          <div class="line-number">2</div>
+          <div class="line-content">
+            <span class="keyword">import</span> ReactDOM
+            <span class="keyword">from</span>
+            <span class="string">'react-dom'</span>;
+          </div>
+        </div>
+        <div class="code-line">
+          <div class="line-number">3</div>
+          <div class="line-content">
+            <span class="keyword">import</span> App
+            <span class="keyword">from</span>
+            <span class="string">'./App'</span>;
+          </div>
+        </div>
+        <div class="code-line">
+          <div class="line-number">4</div>
+          <div class="line-content">
+            <span class="function">if</span>(<span class="string"
+              >'renders without crashing'</span
+            >, () <span class="keyword">=></span> {
+          </div>
+        </div>
+        <div class="code-line">
+          <div class="line-number">5</div>
+          <div class="line-content">
+            <span class="keyword">const</span> div = document.<span
+              class="function"
+              >createElement</span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Flowchart initialization
+      document.addEventListener("DOMContentLoaded", function () {
+        const flowchart = document.getElementById("flowchart");
+        const connections = document.getElementById("connections");
+        const codeEditorBtn = document.createElement("button");
+        codeEditorBtn.className =
+          "fixed bottom-4 right-4 bg-purple-600 text-white p-2 rounded-full shadow-lg z-50";
+        codeEditorBtn.innerHTML = '<i class="fas fa-code"></i>';
+        document.body.appendChild(codeEditorBtn);
+
+        const codeEditor = document.getElementById("codeEditor");
+        const closeEditor = document.getElementById("closeEditor");
+
+        codeEditorBtn.addEventListener("click", function () {
+          codeEditor.style.display =
+            codeEditor.style.display === "none" ? "block" : "none";
+        });
+
+        closeEditor.addEventListener("click", function () {
+          codeEditor.style.display = "none";
+        });
+
+        // Create flowchart nodes
+        const nodes = [
+          {
+            id: "paging",
+            label: "Paging file",
+            x: 600,
+            y: 180,
+            icon: "file-alt",
+            badge: "5.2 mb",
+            tag: "GETTING REPORTS",
+            color: "blue",
+          },
+          {
+            id: "autodirection",
+            label: "Autodirection",
+            x: 450,
+            y: 240,
+            icon: "directions",
+            color: "blue",
+            bgColor: "bg-blue-700",
+          },
+          {
+            id: "overlapping",
+            label: "Overlapping requests",
+            x: 480,
+            y: 300,
+            icon: "layer-group",
+            color: "brown",
+          },
+          {
+            id: "primary",
+            label: "Primary entry",
+            x: 850,
+            y: 320,
+            icon: "file-alt",
+            color: "blue",
+          },
+          {
+            id: "reunification",
+            label: "Reunification",
+            x: 680,
+            y: 320,
+            icon: "object-group",
+            color: "gray",
+          },
+          {
+            id: "adjustment",
+            label: "L-adjustment",
+            x: 510,
+            y: 340,
+            icon: "sliders-h",
+            color: "brown",
+          },
+          {
+            id: "authorization",
+            label: "Authorization",
+            x: 520,
+            y: 410,
+            icon: "key",
+            color: "purple",
+            bgColor: "bg-purple-700",
+          },
+          {
+            id: "support",
+            label: "Support dialogue",
+            x: 650,
+            y: 410,
+            icon: "comments",
+            color: "purple",
+            chat: true,
+          },
+          {
+            id: "building",
+            label: "Building blocks",
+            x: 850,
+            y: 410,
+            icon: "th-large",
+            color: "blue",
+          },
+          {
+            id: "searching",
+            label: "Re-searching",
+            x: 780,
+            y: 480,
+            icon: "search",
+            color: "gray",
+            tag: "REDIRECTING",
+          },
+          {
+            id: "connecting",
+            label: "Connecting",
+            x: 450,
+            y: 520,
+            icon: "plug",
+            color: "gray",
+          },
+          {
+            id: "acceptance",
+            label: "Acceptance",
+            x: 450,
+            y: 560,
+            icon: "check-circle",
+            color: "gray",
+          },
+          {
+            id: "asking",
+            label: "Asking",
+            x: 450,
+            y: 600,
+            icon: "question-circle",
+            color: "brown",
+            bgColor: "bg-yellow-800",
+          },
+          {
+            id: "attachment",
+            label: "Attachment",
+            x: 580,
+            y: 600,
+            icon: "paperclip",
+            color: "brown",
+            tag: "RELOAD",
+          },
+          {
+            id: "excessive",
+            label: "All excessive",
+            x: 720,
+            y: 580,
+            icon: "exclamation-circle",
+            color: "red",
+          },
+          {
+            id: "streamline",
+            label: "Streamline",
+            x: 720,
+            y: 620,
+            icon: "stream",
+            color: "gray",
+          },
+          {
+            id: "correcting",
+            label: "Correcting",
+            x: 850,
+            y: 600,
+            icon: "wrench",
+            color: "red",
+            bgColor: "bg-red-100",
+          },
+          {
+            id: "analysis",
+            label: "Analysis file",
+            x: 850,
+            y: 700,
+            icon: "chart-line",
+            color: "red",
+            badge: "25.7 mb",
+            tag: "LOADING",
+          },
+        ];
+
+        // Define connections between nodes
+        const nodeConnections = [
+          { from: "autodirection", to: "paging", dashed: true },
+          { from: "overlapping", to: "autodirection", dashed: true },
+          { from: "adjustment", to: "overlapping", dashed: true },
+          { from: "authorization", to: "adjustment", dashed: true },
+          { from: "support", to: "authorization", dashed: true },
+          { from: "building", to: "support", dashed: true },
+          { from: "primary", to: "reunification", dashed: true },
+          { from: "reunification", to: "support", dashed: true },
+          { from: "searching", to: "building", dashed: true },
+          { from: "connecting", to: "authorization", dashed: true },
+          { from: "acceptance", to: "connecting", dashed: true },
+          { from: "asking", to: "acceptance", dashed: true },
+          { from: "attachment", to: "asking", dashed: true },
+          { from: "excessive", to: "attachment", dashed: true },
+          { from: "streamline", to: "excessive", dashed: true },
+          { from: "correcting", to: "excessive", dashed: true },
+          { from: "analysis", to: "correcting", dashed: true },
+        ];
+
+        // Render nodes
+        nodes.forEach((node) => {
+          const nodeEl = document.createElement("div");
+          nodeEl.id = node.id;
+          nodeEl.className = `flow-node absolute p-3 ${
+            node.bgColor || "bg-white"
+          } rounded-lg shadow-md border`;
+          nodeEl.style.left = `${node.x}px`;
+          nodeEl.style.top = `${node.y}px`;
+
+          let nodeContent = `
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-${node.icon} text-${
+            node.color
+          }-600"></i>
+                        <span>${node.label}</span>
+                        ${
+                          node.badge
+                            ? `<span class="ml-2 text-xs text-gray-500">${node.badge}</span>`
+                            : ""
+                        }
+                    </div>
+                `;
+
+          if (node.tag) {
+            nodeContent += `<div class="mt-1 text-xs bg-gray-100 px-2 py-1 rounded">${node.tag}</div>`;
+          }
+
+          if (node.chat) {
+            nodeContent += `
+                        <div class="mt-2 border-t pt-2">
+                            <div class="flex items-start mb-1">
+                                <div class="w-6 h-6 rounded-full bg-gray-300 flex-shrink-0 mr-2"></div>
+                                <div class="text-xs">Could you help me...</div>
+                            </div>
+                            <div class="flex items-start mb-1">
+                                <div class="w-6 h-6 rounded-full bg-gray-300 flex-shrink-0 mr-2"></div>
+                                <div class="text-xs">Can I get a link?</div>
+                            </div>
+                            <div class="text-xs text-gray-500">16 replies, 3 files</div>
+                        </div>
+                    `;
+          }
+
+          nodeEl.innerHTML = nodeContent;
+          flowchart.appendChild(nodeEl);
+        });
+
+        // Draw connections
+        function drawConnections() {
+          connections.innerHTML = "";
+
+          nodeConnections.forEach((conn) => {
+            const fromNode = document.getElementById(conn.from);
+            const toNode = document.getElementById(conn.to);
+
+            if (fromNode && toNode) {
+              const fromRect = fromNode.getBoundingClientRect();
+              const toRect = toNode.getBoundingClientRect();
+
+              const flowchartRect = flowchart.getBoundingClientRect();
+
+              const fromX =
+                fromRect.left + fromRect.width / 2 - flowchartRect.left;
+              const fromY =
+                fromRect.top + fromRect.height / 2 - flowchartRect.top;
+              const toX = toRect.left + toRect.width / 2 - flowchartRect.left;
+              const toY = toRect.top + toRect.height / 2 - flowchartRect.top;
+
+              const line = document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "path"
+              );
+              line.setAttribute("d", `M ${fromX} ${fromY} L ${toX} ${toY}`);
+              line.setAttribute("stroke", "#666");
+              line.setAttribute("stroke-width", "1.5");
+
+              if (conn.dashed) {
+                line.setAttribute("stroke-dasharray", "5,5");
+              }
+
+              connections.appendChild(line);
+            }
+          });
+        }
+
+        drawConnections();
+        window.addEventListener("resize", drawConnections);
+
+        // Make nodes draggable
+        const draggables = document.querySelectorAll(".flow-node");
+        draggables.forEach((draggable) => {
+          draggable.addEventListener("mousedown", dragStart);
+        });
+
+        function dragStart(e) {
+          const target = e.target.closest(".flow-node");
+          if (!target) return;
+
+          const startX = e.clientX - target.offsetLeft;
+          const startY = e.clientY - target.offsetTop;
+
+          function drag(e) {
+            target.style.left = `${e.clientX - startX}px`;
+            target.style.top = `${e.clientY - startY}px`;
+            drawConnections();
+          }
+
+          function dragEnd() {
+            document.removeEventListener("mousemove", drag);
+            document.removeEventListener("mouseup", dragEnd);
+          }
+
+          document.addEventListener("mousemove", drag);
+          document.addEventListener("mouseup", dragEnd);
+        }
+
+        // Toggle sidebar items
+        const sidebarItems = document.querySelectorAll(".sidebar-item");
+        sidebarItems.forEach((item) => {
+          if (item.querySelector(".expanded-icon")) {
+            item.addEventListener("click", function () {
+              const icon = this.querySelector(".expanded-icon");
+              const submenu = this.nextElementSibling;
+
+              if (icon.classList.contains("expanded-icon")) {
+                icon.classList.toggle("expanded-icon");
+              } else {
+                icon.classList.add("expanded-icon");
+              }
+
+              if (submenu && submenu.classList.contains("sidebar-submenu")) {
+                submenu.style.display =
+                  submenu.style.display === "none" ? "block" : "none";
+              }
+            });
+          }
+        });
+
+        // Make narrow sidebar items interactive
+        const narrowSidebarItems = document.querySelectorAll(
+          ".narrow-sidebar-item"
+        );
+        narrowSidebarItems.forEach((item) => {
+          item.addEventListener("click", function () {
+            narrowSidebarItems.forEach((i) => i.classList.remove("active"));
+            this.classList.add("active");
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

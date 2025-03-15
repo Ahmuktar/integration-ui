@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alumio API Integration Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .connection-line {
+        stroke-dasharray: 5, 5;
+        stroke: #666;
+      }
+      .flow-node {
+        transition: transform 0.2s;
+        cursor: move;
+        z-index: 10;
+      }
+      .flow-node:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      .sidebar-item {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      .sidebar-item:hover {
+        background-color: rgba(107, 33, 168, 0.1);
+      }
+      .sidebar-item.active {
+        background-color: rgba(107, 33, 168, 0.1);
+      }
+      .sidebar-item i {
+        width: 20px;
+        text-align: center;
+        margin-right: 10px;
+      }
+      .sidebar-submenu {
+        margin-left: 20px;
+      }
+      .expanded-icon {
+        transform: rotate(90deg);
+      }
+      .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 40px;
+        height: 20px;
+      }
+      .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.4s;
+        border-radius: 34px;
+      }
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 2px;
+        bottom: 2px;
+        background-color: white;
+        transition: 0.4s;
+        border-radius: 50%;
+      }
+      input:checked + .slider {
+        background-color: #8b5cf6;
+      }
+      input:checked + .slider:before {
+        transform: translateX(20px);
+      }
+      .code-editor {
+        font-family: monospace;
+        background-color: white;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .code-line {
+        display: flex;
+      }
+      .line-number {
+        width: 30px;
+        text-align: right;
+        padding-right: 10px;
+        color: #888;
+        user-select: none;
+      }
+      .line-content {
+        flex: 1;
+      }
+      .keyword {
+        color: #8b5cf6;
+      }
+      .string {
+        color: #16a34a;
+      }
+      .function {
+        color: #2563eb;
+      }
+      .narrow-sidebar-item {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6b7280;
+        border-radius: 8px;
+        margin: 8px 0;
+        cursor: pointer;
+        transition: background-color 0.2s, color 0.2s;
+      }
+      .narrow-sidebar-item:hover {
+        background-color: rgba(107, 33, 168, 0.1);
+        color: #8b5cf6;
+      }
+      .narrow-sidebar-item.active {
+        background-color: rgba(107, 33, 168, 0.1);
+        color: #8b5cf6;
+      }
+      .notification-badge {
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        width: 14px;
+        height: 14px;
+        background-color: #ef4444;
+        border-radius: 50%;
+        font-size: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+      }
+      .system-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+      }
+      .system-badge.erp {
+        background-color: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+      }
+      .system-badge.crm {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+      }
+      .system-badge.ecommerce {
+        background-color: rgba(249, 115, 22, 0.1);
+        color: #f97316;
+      }
+      .system-badge.pim {
+        background-color: rgba(139, 92, 246, 0.1);
+        color: #8b5cf6;
+      }
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+      }
+      .status-badge.active {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+      }
+      .status-badge.error {
+        background-color: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+      }
+      .status-badge.warning {
+        background-color: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+      }
+      .status-badge.inactive {
+        background-color: rgba(107, 114, 128, 0.1);
+        color: #6b7280;
+      }
+      .webhook-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+        background-color: rgba(139, 92, 246, 0.1);
+        color: #8b5cf6;
+      }
+      .api-method {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 600;
+        margin-right: 4px;
+      }
+      .api-method.get {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+      }
+      .api-method.post {
+        background-color: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+      }
+      .api-method.put {
+        background-color: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+      }
+      .api-method.delete {
+        background-color: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50">
+    <!-- Header -->
+    <header
+      class="bg-purple-800 text-white p-2 flex items-center justify-between"
+    >
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-2 px-2">
+          <div class="flex items-center">
+            <img
+              src="/placeholder.svg?height=24&width=24"
+              alt="Ahmadio Logo"
+              class="h-6 w-6"
+            />
+            <span class="ml-2 font-medium">Ahmadio</span>
+          </div>
+        </div>
+        <div class="flex space-x-2">
+          <button
+            class="px-3 py-1 bg-purple-700 rounded-md flex items-center text-sm"
+          >
+            <span class="w-2 h-2 bg-white rounded-full mr-2"></span>
+            Shopify to SAP
+            <i class="fas fa-times ml-2"></i>
+          </button>
+          <button
+            class="px-3 py-1 bg-purple-700 rounded-md flex items-center text-sm"
+          >
+            <span class="w-2 h-2 bg-white rounded-full mr-2"></span>
+            Magento to Salesforce
+          </button>
+          <button
+            class="px-3 py-1 bg-purple-700 rounded-md flex items-center text-sm"
+          >
+            <span class="w-2 h-2 bg-white rounded-full mr-2"></span>
+            Akeneo to Shopify
+          </button>
+          <button
+            class="px-2 py-1 bg-purple-700 rounded-md flex items-center text-sm"
+          >
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+      </div>
+      <div class="flex items-center space-x-4">
+        <button class="p-2"><i class="fas fa-question-circle"></i></button>
+        <button class="p-2"><i class="fas fa-share"></i></button>
+        <button class="p-2"><i class="fas fa-shield"></i></button>
+        <div class="border-l border-purple-600 h-6 mx-2"></div>
+        <button class="p-2"><i class="fas fa-ellipsis-h"></i></button>
+      </div>
+    </header>
+
+    <!-- Main Navigation -->
+    <nav class="bg-white border-b flex items-center px-4 py-2">
+      <div class="flex space-x-6">
+        <a href="#" class="text-purple-800 font-medium">INTEGRATIONS</a>
+        <a href="#" class="text-gray-600">CONNECTORS</a>
+        <a href="#" class="text-gray-600">MONITORING</a>
+        <span class="text-gray-400 border rounded px-2 ml-2">3</span>
+      </div>
+      <div class="ml-auto flex items-center space-x-4">
+        <a href="#" class="text-gray-600">SETTINGS</a>
+        <a href="#" class="text-gray-600">DEPLOY</a>
+        <a href="#" class="text-gray-600">LOGS</a>
+      </div>
+    </nav>
+
+    <div class="flex h-[calc(100vh-120px)]">
+      <!-- Narrow Icon Sidebar -->
+      <aside class="w-14 bg-white border-r flex flex-col items-center py-4">
+        <div class="flex-1 flex flex-col items-center">
+          <div class="narrow-sidebar-item active" title="Dashboard">
+            <i class="fas fa-th-large"></i>
+          </div>
+          <div class="narrow-sidebar-item" title="Connectors & Webhooks">
+            <i class="fas fa-plug"></i>
+          </div>
+          <div class="narrow-sidebar-item" title="Data Mapping">
+            <i class="fas fa-exchange-alt"></i>
+          </div>
+          <div class="narrow-sidebar-item" title="Workflow Automation">
+            <i class="fas fa-sitemap"></i>
+          </div>
+          <div class="narrow-sidebar-item relative" title="Monitoring">
+            <i class="fas fa-chart-line"></i>
+            <span class="notification-badge">2</span>
+          </div>
+          <div class="narrow-sidebar-item" title="Security">
+            <i class="fas fa-shield-alt"></i>
+          </div>
+        </div>
+        <div class="mt-auto">
+          <div class="narrow-sidebar-item" title="Notifications">
+            <i class="fas fa-bell"></i>
+          </div>
+          <div class="narrow-sidebar-item" title="Settings">
+            <i class="fas fa-cog"></i>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Left Sidebar -->
+      <aside class="w-64 border-r bg-white overflow-y-auto">
+        <div class="p-4">
+          <div class="relative mb-4">
+            <input
+              type="text"
+              placeholder="Search integrations..."
+              class="w-full pl-10 pr-4 py-2 border rounded-md"
+            />
+            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+          </div>
+
+          <div class="space-y-1">
+            <!-- Sidebar items -->
+            <div class="sidebar-item">
+              <i class="fas fa-home text-gray-500"></i>
+              <span>Overview</span>
+            </div>
+
+            <div class="sidebar-item active">
+              <i class="fas fa-chevron-right expanded-icon text-gray-500"></i>
+              <span>Connectors & Webhooks</span>
+            </div>
+
+            <div class="sidebar-submenu ml-6 space-y-1">
+              <div class="sidebar-item">
+                <i class="fas fa-shopping-cart text-gray-500"></i>
+                <span>Shopify</span>
+                <i class="fas fa-check-circle ml-auto text-green-500"></i>
+              </div>
+
+              <div class="sidebar-item">
+                <i class="fas fa-database text-gray-500"></i>
+                <span>SAP ERP</span>
+                <i class="fas fa-check-circle ml-auto text-green-500"></i>
+              </div>
+
+              <div class="sidebar-item">
+                <i class="fas fa-shopping-bag text-gray-500"></i>
+                <span>Magento</span>
+                <i class="fas fa-check-circle ml-auto text-green-500"></i>
+              </div>
+
+              <div class="sidebar-item">
+                <i class="fas fa-users text-gray-500"></i>
+                <span>Salesforce</span>
+                <i class="fas fa-check-circle ml-auto text-green-500"></i>
+              </div>
+
+              <div class="sidebar-item">
+                <i class="fas fa-box text-gray-500"></i>
+                <span>Akeneo PIM</span>
+                <i class="fas fa-check-circle ml-auto text-green-500"></i>
+              </div>
+
+              <div class="sidebar-item">
+                <i class="fas fa-plus text-gray-500"></i>
+                <span>Add Connector</span>
+              </div>
+            </div>
+
+            <div class="sidebar-item">
+              <i class="fas fa-chevron-right text-gray-500"></i>
+              <span>API Endpoints & Mapping</span>
+            </div>
+
+            <div class="sidebar-item">
+              <i class="fas fa-chevron-right text-gray-500"></i>
+              <span>Authentication & Security</span>
+            </div>
+
+            <div class="sidebar-item">
+              <i class="fas fa-chevron-right text-gray-500"></i>
+              <span>Data Transformation</span>
+            </div>
+
+            <div class="sidebar-item active">
+              <i class="fas fa-chevron-right expanded-icon text-gray-500"></i>
+              <span>Workflow Automation</span>
+            </div>
+
+            <div class="sidebar-submenu ml-6 space-y-1">
+              <div class="sidebar-item">
+                <i class="fas fa-bolt text-gray-500"></i>
+                <span>Triggers</span>
+                <i class="fas fa-ellipsis-h ml-auto text-gray-400"></i>
+              </div>
+
+              <div class="sidebar-item">
+                <i class="fas fa-clock text-gray-500"></i>
+                <span>Scheduled Jobs</span>
+                <i class="fas fa-ellipsis-h ml-auto text-gray-400"></i>
+              </div>
+
+              <div class="sidebar-item">
+                <i class="fas fa-code-branch text-gray-500"></i>
+                <span>Conditional Logic</span>
+                <i class="fas fa-ellipsis-h ml-auto text-gray-400"></i>
+              </div>
+
+              <div class="sidebar-item">
+                <i class="fas fa-sync-alt text-gray-500"></i>
+                <span>Batch Processing</span>
+                <i class="fas fa-ellipsis-h ml-auto text-gray-400"></i>
+              </div>
+            </div>
+
+            <div class="sidebar-item">
+              <i class="fas fa-chevron-right text-gray-500"></i>
+              <span>Error Handling & Monitoring</span>
+            </div>
+
+            <div class="sidebar-item">
+              <i class="fas fa-chevron-right text-gray-500"></i>
+              <span>Templates</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="flex-1 p-4 relative overflow-hidden" id="flowchart">
+        <!-- SVG for connection lines -->
+        <svg
+          id="connections"
+          class="absolute top-0 left-0 w-full h-full pointer-events-none"
+        >
+          <!-- Connection lines will be added here via JavaScript -->
+        </svg>
+
+        <!-- Flowchart nodes will be added here via JavaScript -->
+      </main>
+
+      <!-- Right Sidebar -->
+      <aside class="w-72 border-l bg-white overflow-y-auto">
+        <div class="p-4">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="font-medium">Integration Details</h3>
+            <button class="text-purple-800 font-medium">Edit</button>
+          </div>
+
+          <div class="mb-6">
+            <div class="text-xl font-medium">Shopify to SAP ERP</div>
+            <div class="text-sm text-gray-600 mb-2">
+              Last updated: 2 hours ago
+            </div>
+            <div class="flex space-x-2 mb-4">
+              <span class="status-badge active">
+                <i class="fas fa-circle text-xs mr-1"></i> Active
+              </span>
+              <span class="system-badge ecommerce">Shopify</span>
+              <span class="system-badge erp">SAP</span>
+            </div>
+
+            <div class="flex justify-between text-sm mb-4">
+              <div>
+                <div class="font-medium">128</div>
+                <div class="text-gray-600">Orders Synced Today</div>
+              </div>
+              <div>
+                <div class="font-medium">99.8%</div>
+                <div class="text-gray-600">Success Rate</div>
+              </div>
+            </div>
+
+            <div class="bg-gray-200 rounded-full h-2 mb-4">
+              <div class="bg-purple-600 h-2 rounded-full w-2/3"></div>
+            </div>
+          </div>
+
+          <div class="mb-6">
+            <h3 class="font-medium mb-4">Trigger Configuration</h3>
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span>Webhook (Real-time)</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" checked />
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="flex items-center justify-between">
+                <span>Scheduled Sync</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" />
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="flex items-center justify-between">
+                <span>Batch Processing</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" />
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="flex items-center justify-between">
+                <span>Auto-retry on Failure</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" checked />
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-6">
+            <h3 class="font-medium mb-4">Conditional Logic</h3>
+            <div class="p-3 bg-gray-50 rounded-md border text-sm mb-3">
+              <div class="font-medium mb-1">IF order.total > 1000</div>
+              <div class="ml-4 text-gray-600">
+                THEN add priority_flag = true
+              </div>
+            </div>
+            <div class="p-3 bg-gray-50 rounded-md border text-sm">
+              <div class="font-medium mb-1">IF customer.type = "wholesale"</div>
+              <div class="ml-4 text-gray-600">THEN route to B2B_process</div>
+            </div>
+          </div>
+
+          <div class="mb-6">
+            <h3 class="font-medium mb-4">API Rate Limiting</h3>
+            <div class="flex items-center justify-between mb-2">
+              <span>Shopify API</span>
+              <span>2 req/sec</span>
+            </div>
+            <input type="range" class="w-full mb-4" value="40" />
+
+            <div class="flex items-center justify-between mb-2">
+              <span>SAP API</span>
+              <span>5 req/sec</span>
+            </div>
+            <input type="range" class="w-full" value="60" />
+          </div>
+
+          <div class="mb-6">
+            <h3 class="font-medium mb-4">Authentication</h3>
+            <div class="space-y-2">
+              <div class="flex items-center">
+                <span class="w-4 h-4 rounded-full bg-purple-600 mr-2"></span>
+                <span>Shopify: OAuth 2.0</span>
+              </div>
+              <div class="flex items-center">
+                <span class="w-4 h-4 rounded-full bg-purple-600 mr-2"></span>
+                <span>SAP: API Key</span>
+              </div>
+              <div class="mt-2 text-xs text-gray-500">
+                Last token refresh: 4 hours ago
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-6">
+            <h3 class="font-medium mb-4">Error Handling</h3>
+            <div class="space-y-2">
+              <div class="flex items-center">
+                <input type="checkbox" checked class="mr-2" />
+                <span>Auto-retry (3 attempts)</span>
+              </div>
+              <div class="flex items-center">
+                <input type="checkbox" checked class="mr-2" />
+                <span>Email notifications</span>
+              </div>
+              <div class="flex items-center">
+                <input type="checkbox" checked class="mr-2" />
+                <span>Error logging</span>
+              </div>
+              <div class="flex items-center">
+                <input type="checkbox" class="mr-2" />
+                <span>Slack alerts</span>
+              </div>
+              <div class="flex items-center">
+                <input type="checkbox" class="mr-2" />
+                <span>Fallback procedure</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Data Mapping Editor Section -->
+    <div
+      class="fixed bottom-0 left-0 right-0 bg-white border-t shadow-md"
+      style="height: 150px; display: none"
+      id="dataMapperEditor"
+    >
+      <div class="flex justify-between items-center p-2 bg-gray-100 border-b">
+        <div class="flex items-center">
+          <span class="font-medium mr-4"
+            >Data Mapping: Shopify Order to SAP Invoice</span
+          >
+          <span class="bg-gray-200 px-2 py-1 rounded text-xs mr-2">JSON</span>
+          <span class="bg-gray-200 px-2 py-1 rounded text-xs">Transform</span>
+        </div>
+        <button class="text-gray-500" id="closeEditor">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="p-4 code-editor h-full overflow-y-auto">
+        <div class="code-line">
+          <div class="line-number">1</div>
+          <div class="line-content">
+            <span class="keyword">{</span>
+          </div>
+        </div>
+        <div class="code-line">
+          <div class="line-number">2</div>
+          <div class="line-content">
+            <span class="string">"mapping"</span>:
+            <span class="keyword">{</span>
+          </div>
+        </div>
+        <div class="code-line">
+          <div class="line-number">3</div>
+          <div class="line-content">
+            <span class="string">"shopify.order.id"</span>:
+            <span class="string">"sap.invoice.order_reference"</span>,
+          </div>
+        </div>
+        <div class="code-line">
+          <div class="line-number">4</div>
+          <div class="line-content">
+            <span class="string">"shopify.order.customer.email"</span>:
+            <span class="string">"sap.invoice.buyer_email"</span>,
+          </div>
+        </div>
+        <div class="code-line">
+          <div class="line-number">5</div>
+          <div class="line-content">
+            <span class="string">"shopify.order.total_price"</span>:
+            <span class="string">"sap.invoice.amount"</span>,
+          </div>
+        </div>
+        <div class="code-line">
+          <div class="line-number">6</div>
+          <div class="line-content">
+            <span class="string">"shopify.order.line_items"</span>:
+            <span class="string">"sap.invoice.items"</span>
+          </div>
+        </div>
+        <div class="code-line">
+          <div class="line-number">7</div>
+          <div class="line-content">
+            <span class="keyword">}</span>
+          </div>
+        </div>
+        <div class="code-line">
+          <div class="line-number">8</div>
+          <div class="line-content">
+            <span class="keyword">}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Flowchart initialization
+      document.addEventListener("DOMContentLoaded", function () {
+        const flowchart = document.getElementById("flowchart");
+        const connections = document.getElementById("connections");
+        const dataMapperBtn = document.createElement("button");
+        dataMapperBtn.className =
+          "fixed bottom-4 right-4 bg-purple-600 text-white p-2 rounded-full shadow-lg z-50";
+        dataMapperBtn.innerHTML = '<i class="fas fa-exchange-alt"></i>';
+        document.body.appendChild(dataMapperBtn);
+
+        const dataMapperEditor = document.getElementById("dataMapperEditor");
+        const closeEditor = document.getElementById("closeEditor");
+
+        dataMapperBtn.addEventListener("click", function () {
+          dataMapperEditor.style.display =
+            dataMapperEditor.style.display === "none" ? "block" : "none";
+        });
+
+        closeEditor.addEventListener("click", function () {
+          dataMapperEditor.style.display = "none";
+        });
+
+        // Create flowchart nodes for Shopify to SAP ERP integration
+        const nodes = [
+          // Trigger
+          {
+            id: "trigger",
+            label: "Webhook Trigger",
+            x: 200,
+            y: 150,
+            icon: "bolt",
+            badge: "Event",
+            tag: "New Order",
+            color: "purple",
+            bgColor: "bg-purple-50",
+          },
+
+          // Shopify
+          {
+            id: "shopify",
+            label: "Shopify Store",
+            x: 200,
+            y: 250,
+            icon: "shopping-cart",
+            badge: "Source",
+            color: "orange",
+            bgColor: "bg-orange-50",
+            system: "ecommerce",
+          },
+          {
+            id: "shopify_api",
+            label: "Shopify API Request",
+            x: 350,
+            y: 250,
+            icon: "cloud-download-alt",
+            color: "orange",
+            tag: "GET Order",
+          },
+
+          // Data Processing
+          {
+            id: "data_fetch",
+            label: "Fetch Order Data",
+            x: 500,
+            y: 250,
+            icon: "file-alt",
+            color: "blue",
+            api: { method: "GET", endpoint: "/orders/{id}" },
+          },
+          {
+            id: "data_transform",
+            label: "Data Transformation",
+            x: 500,
+            y: 350,
+            icon: "exchange-alt",
+            color: "purple",
+            bgColor: "bg-purple-100",
+            tag: "MAPPING",
+          },
+          {
+            id: "data_validate",
+            label: "Data Validation",
+            x: 650,
+            y: 350,
+            icon: "check-circle",
+            color: "green",
+          },
+          {
+            id: "conditional",
+            label: "Conditional Logic",
+            x: 350,
+            y: 350,
+            icon: "code-branch",
+            color: "purple",
+            tag: "IF/THEN",
+          },
+
+          // SAP
+          {
+            id: "sap",
+            label: "SAP ERP",
+            x: 800,
+            y: 450,
+            icon: "database",
+            badge: "Target",
+            color: "blue",
+            bgColor: "bg-blue-50",
+            system: "erp",
+          },
+          {
+            id: "sap_auth",
+            label: "SAP Authentication",
+            x: 650,
+            y: 450,
+            icon: "key",
+            color: "blue",
+            bgColor: "bg-blue-50",
+          },
+          {
+            id: "sap_api",
+            label: "SAP API Request",
+            x: 500,
+            y: 450,
+            icon: "cloud-upload-alt",
+            color: "blue",
+            tag: "POST Invoice",
+            api: { method: "POST", endpoint: "/invoices" },
+          },
+
+          // Response Handling
+          {
+            id: "response",
+            label: "Response Handling",
+            x: 350,
+            y: 450,
+            icon: "reply",
+            color: "green",
+            tag: "SUCCESS/FAIL",
+          },
+          {
+            id: "status_update",
+            label: "Update Order Status",
+            x: 200,
+            y: 450,
+            icon: "check-double",
+            color: "green",
+            tag: "PROCESSED",
+          },
+
+          // Error Handling
+          {
+            id: "error",
+            label: "Error Handling",
+            x: 350,
+            y: 550,
+            icon: "exclamation-triangle",
+            color: "red",
+            tag: "RETRY",
+          },
+          {
+            id: "logging",
+            label: "Logging Service",
+            x: 200,
+            y: 550,
+            icon: "clipboard-list",
+            color: "gray",
+          },
+          {
+            id: "notification",
+            label: "Alert Notification",
+            x: 500,
+            y: 550,
+            icon: "bell",
+            color: "red",
+            tag: "EMAIL",
+          },
+        ];
+
+        // Define connections between nodes
+        const nodeConnections = [
+          // Main flow
+          { from: "trigger", to: "shopify", dashed: false },
+          { from: "shopify", to: "shopify_api", dashed: false },
+          { from: "shopify_api", to: "data_fetch", dashed: false },
+          { from: "data_fetch", to: "data_transform", dashed: false },
+          { from: "data_transform", to: "data_validate", dashed: false },
+          { from: "data_validate", to: "sap_api", dashed: false },
+          { from: "sap_api", to: "sap_auth", dashed: false },
+          { from: "sap_auth", to: "sap", dashed: false },
+          { from: "sap_api", to: "response", dashed: false },
+          { from: "response", to: "status_update", dashed: false },
+
+          // Conditional logic
+          { from: "data_fetch", to: "conditional", dashed: true },
+          { from: "conditional", to: "data_transform", dashed: true },
+
+          // Error paths
+          { from: "shopify_api", to: "error", dashed: true },
+          { from: "data_transform", to: "error", dashed: true },
+          { from: "sap_api", to: "error", dashed: true },
+          { from: "error", to: "logging", dashed: false },
+          { from: "error", to: "notification", dashed: false },
+        ];
+
+        // Render nodes
+        nodes.forEach((node) => {
+          const nodeEl = document.createElement("div");
+          nodeEl.id = node.id;
+          nodeEl.className = `flow-node absolute p-3 ${
+            node.bgColor || "bg-white"
+          } rounded-lg shadow-md border`;
+          nodeEl.style.left = `${node.x}px`;
+          nodeEl.style.top = `${node.y}px`;
+
+          let nodeContent = `
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-${node.icon} text-${
+            node.color
+          }-600"></i>
+                        <span>${node.label}</span>
+                        ${
+                          node.badge
+                            ? `<span class="ml-2 text-xs bg-gray-100 px-2 py-1 rounded">${node.badge}</span>`
+                            : ""
+                        }
+                    </div>
+                `;
+
+          if (node.tag) {
+            nodeContent += `<div class="mt-1 text-xs bg-gray-100 px-2 py-1 rounded">${node.tag}</div>`;
+          }
+
+          if (node.system) {
+            nodeContent += `<div class="mt-2 text-xs"><span class="system-badge ${
+              node.system
+            }">${node.system.toUpperCase()}</span></div>`;
+          }
+
+          if (node.api) {
+            const methodClass = node.api.method.toLowerCase();
+            nodeContent += `
+                        <div class="mt-2 text-xs flex items-center">
+                            <span class="api-method ${methodClass}">${node.api.method}</span>
+                            <span class="text-gray-600">${node.api.endpoint}</span>
+                        </div>
+                    `;
+          }
+
+          nodeEl.innerHTML = nodeContent;
+          flowchart.appendChild(nodeEl);
+        });
+
+        // Draw connections
+        function drawConnections() {
+          connections.innerHTML = "";
+
+          nodeConnections.forEach((conn) => {
+            const fromNode = document.getElementById(conn.from);
+            const toNode = document.getElementById(conn.to);
+
+            if (fromNode && toNode) {
+              const fromRect = fromNode.getBoundingClientRect();
+              const toRect = toNode.getBoundingClientRect();
+
+              const flowchartRect = flowchart.getBoundingClientRect();
+
+              const fromX =
+                fromRect.left + fromRect.width / 2 - flowchartRect.left;
+              const fromY =
+                fromRect.top + fromRect.height / 2 - flowchartRect.top;
+              const toX = toRect.left + toRect.width / 2 - flowchartRect.left;
+              const toY = toRect.top + toRect.height / 2 - flowchartRect.top;
+
+              const line = document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "path"
+              );
+              line.setAttribute("d", `M ${fromX} ${fromY} L ${toX} ${toY}`);
+              line.setAttribute("stroke", "#666");
+              line.setAttribute("stroke-width", "1.5");
+
+              if (conn.dashed) {
+                line.setAttribute("stroke-dasharray", "5,5");
+              }
+
+              connections.appendChild(line);
+            }
+          });
+        }
+
+        drawConnections();
+        window.addEventListener("resize", drawConnections);
+
+        // Make nodes draggable
+        const draggables = document.querySelectorAll(".flow-node");
+        draggables.forEach((draggable) => {
+          draggable.addEventListener("mousedown", dragStart);
+        });
+
+        function dragStart(e) {
+          const target = e.target.closest(".flow-node");
+          if (!target) return;
+
+          const startX = e.clientX - target.offsetLeft;
+          const startY = e.clientY - target.offsetTop;
+
+          function drag(e) {
+            target.style.left = `${e.clientX - startX}px`;
+            target.style.top = `${e.clientY - startY}px`;
+            drawConnections();
+          }
+
+          function dragEnd() {
+            document.removeEventListener("mousemove", drag);
+            document.removeEventListener("mouseup", dragEnd);
+          }
+
+          document.addEventListener("mousemove", drag);
+          document.addEventListener("mouseup", dragEnd);
+        }
+
+        // Toggle sidebar items
+        const sidebarItems = document.querySelectorAll(".sidebar-item");
+        sidebarItems.forEach((item) => {
+          if (
+            item.querySelector(".expanded-icon") ||
+            item.querySelector(".fa-chevron-right")
+          ) {
+            item.addEventListener("click", function () {
+              const icon =
+                this.querySelector(".expanded-icon") ||
+                this.querySelector(".fa-chevron-right");
+              const submenu = this.nextElementSibling;
+
+              if (icon.classList.contains("expanded-icon")) {
+                icon.classList.toggle("expanded-icon");
+              } else {
+                icon.classList.add("expanded-icon");
+              }
+
+              if (submenu && submenu.classList.contains("sidebar-submenu")) {
+                submenu.style.display =
+                  submenu.style.display === "none" ? "block" : "none";
+              }
+            });
+          }
+        });
+
+        // Make narrow sidebar items interactive
+        const narrowSidebarItems = document.querySelectorAll(
+          ".narrow-sidebar-item"
+        );
+        narrowSidebarItems.forEach((item) => {
+          item.addEventListener("click", function () {
+            narrowSidebarItems.forEach((i) => i.classList.remove("active"));
+            this.classList.add("active");
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

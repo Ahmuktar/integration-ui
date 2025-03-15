@@ -1,0 +1,1660 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alumio Scalability & Security</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .sidebar-item {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      .sidebar-item:hover {
+        background-color: rgba(107, 33, 168, 0.1);
+      }
+      .sidebar-item.active {
+        background-color: rgba(107, 33, 168, 0.1);
+      }
+      .sidebar-item i {
+        width: 20px;
+        text-align: center;
+        margin-right: 10px;
+      }
+      .sidebar-submenu {
+        margin-left: 20px;
+      }
+      .expanded-icon {
+        transform: rotate(90deg);
+      }
+      .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 40px;
+        height: 20px;
+      }
+      .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.4s;
+        border-radius: 34px;
+      }
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 2px;
+        bottom: 2px;
+        background-color: white;
+        transition: 0.4s;
+        border-radius: 50%;
+      }
+      input:checked + .slider {
+        background-color: #8b5cf6;
+      }
+      input:checked + .slider:before {
+        transform: translateX(20px);
+      }
+      .narrow-sidebar-item {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6b7280;
+        border-radius: 8px;
+        margin: 8px 0;
+        cursor: pointer;
+        transition: background-color 0.2s, color 0.2s;
+      }
+      .narrow-sidebar-item:hover {
+        background-color: rgba(107, 33, 168, 0.1);
+        color: #8b5cf6;
+      }
+      .narrow-sidebar-item.active {
+        background-color: rgba(107, 33, 168, 0.1);
+        color: #8b5cf6;
+      }
+      .notification-badge {
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        width: 14px;
+        height: 14px;
+        background-color: #ef4444;
+        border-radius: 50%;
+        font-size: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+      }
+      .system-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+      }
+      .system-badge.erp {
+        background-color: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+      }
+      .system-badge.crm {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+      }
+      .system-badge.ecommerce {
+        background-color: rgba(249, 115, 22, 0.1);
+        color: #f97316;
+      }
+      .system-badge.pim {
+        background-color: rgba(139, 92, 246, 0.1);
+        color: #8b5cf6;
+      }
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+      }
+      .status-badge.active {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+      }
+      .status-badge.error {
+        background-color: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+      }
+      .status-badge.warning {
+        background-color: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+      }
+      .status-badge.inactive {
+        background-color: rgba(107, 114, 128, 0.1);
+        color: #6b7280;
+      }
+      .security-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+      }
+      .security-badge.high {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+      }
+      .security-badge.medium {
+        background-color: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+      }
+      .security-badge.low {
+        background-color: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+      }
+      .compliance-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+      }
+      .compliance-badge.compliant {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+      }
+      .compliance-badge.partial {
+        background-color: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+      }
+      .compliance-badge.non-compliant {
+        background-color: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+      }
+      .chart-bar {
+        transition: width 1s ease-in-out;
+      }
+      .pulse-dot {
+        position: relative;
+      }
+      .pulse-dot::before {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        background-color: inherit;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+        z-index: -1;
+      }
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+          opacity: 0.8;
+        }
+        70% {
+          transform: scale(2);
+          opacity: 0;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 0;
+        }
+      }
+      .timeline-item {
+        position: relative;
+        padding-left: 20px;
+      }
+      .timeline-item::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background-color: #e5e7eb;
+      }
+      .timeline-item::after {
+        content: "";
+        position: absolute;
+        left: -4px;
+        top: 10px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #8b5cf6;
+      }
+      .timeline-item.success::after {
+        background-color: #10b981;
+      }
+      .timeline-item.error::after {
+        background-color: #ef4444;
+      }
+      .timeline-item.warning::after {
+        background-color: #f59e0b;
+      }
+      .timeline-item.info::after {
+        background-color: #3b82f6;
+      }
+      .security-card {
+        transition: transform 0.2s;
+      }
+      .security-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50">
+    <!-- Header -->
+    <header
+      class="bg-purple-800 text-white p-2 flex items-center justify-between"
+    >
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-2 px-2">
+          <div class="flex space-x-1">
+            <div class="w-2 h-2 bg-red-400 rounded-full"></div>
+            <div class="w-2 h-2 bg-yellow-400 rounded-full"></div>
+            <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+          </div>
+          <div class="flex items-center">
+            <img
+              src="/placeholder.svg?height=24&width=24"
+              alt="Alumio Logo"
+              class="h-6 w-6"
+            />
+            <span class="ml-2 font-medium">alumio</span>
+          </div>
+        </div>
+        <div class="flex space-x-2">
+          <button
+            class="px-3 py-1 bg-purple-700 rounded-md flex items-center text-sm"
+          >
+            <span class="w-2 h-2 bg-white rounded-full mr-2"></span>
+            Shopify to SAP
+            <i class="fas fa-times ml-2"></i>
+          </button>
+          <button
+            class="px-3 py-1 bg-purple-700 rounded-md flex items-center text-sm"
+          >
+            <span class="w-2 h-2 bg-white rounded-full mr-2"></span>
+            Magento to Netsuite
+          </button>
+          <button
+            class="px-3 py-1 bg-purple-700 rounded-md flex items-center text-sm"
+          >
+            <span class="w-2 h-2 bg-white rounded-full mr-2"></span>
+            Akeneo to Shopify
+          </button>
+          <button
+            class="px-2 py-1 bg-purple-700 rounded-md flex items-center text-sm"
+          >
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+      </div>
+      <div class="flex items-center space-x-4">
+        <button class="p-2"><i class="fas fa-question-circle"></i></button>
+        <button class="p-2"><i class="fas fa-share"></i></button>
+        <button class="p-2"><i class="fas fa-shield"></i></button>
+        <div class="border-l border-purple-600 h-6 mx-2"></div>
+        <button class="p-2"><i class="fas fa-ellipsis-h"></i></button>
+      </div>
+    </header>
+
+    <!-- Main Navigation -->
+    <nav class="bg-white border-b flex items-center px-4 py-2">
+      <div class="flex space-x-6">
+        <a href="#" class="text-gray-600">INTEGRATIONS</a>
+        <a href="#" class="text-gray-600">DATA MAPPING</a>
+        <a href="#" class="text-gray-600">WORKFLOW AUTOMATION</a>
+        <a href="#" class="text-purple-800 font-medium"
+          >SCALABILITY & SECURITY</a
+        >
+      </div>
+      <div class="ml-auto flex items-center space-x-4">
+        <a href="#" class="text-gray-600">SETTINGS</a>
+        <a href="#" class="text-gray-600">DEPLOY</a>
+        <a href="#" class="text-gray-600">LOGS</a>
+      </div>
+    </nav>
+
+    <div class="flex h-[calc(100vh-120px)]">
+      <!-- Narrow Icon Sidebar -->
+      <aside class="w-14 bg-white border-r flex flex-col items-center py-4">
+        <div class="flex-1 flex flex-col items-center">
+          <div class="narrow-sidebar-item" title="Dashboard">
+            <i class="fas fa-th-large"></i>
+          </div>
+          <div class="narrow-sidebar-item" title="Connectors & Webhooks">
+            <i class="fas fa-plug"></i>
+          </div>
+          <div class="narrow-sidebar-item" title="Data Mapping">
+            <i class="fas fa-exchange-alt"></i>
+          </div>
+          <div class="narrow-sidebar-item" title="Workflow Automation">
+            <i class="fas fa-sitemap"></i>
+          </div>
+          <div class="narrow-sidebar-item" title="Monitoring">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <div class="narrow-sidebar-item active" title="Security">
+            <i class="fas fa-shield-alt"></i>
+          </div>
+        </div>
+        <div class="mt-auto">
+          <div class="narrow-sidebar-item" title="Notifications">
+            <i class="fas fa-bell"></i>
+          </div>
+          <div class="narrow-sidebar-item" title="Settings">
+            <i class="fas fa-cog"></i>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Left Sidebar -->
+      <aside class="w-64 border-r bg-white overflow-y-auto">
+        <div class="p-4">
+          <div class="relative mb-4">
+            <input
+              type="text"
+              placeholder="Search security settings..."
+              class="w-full pl-10 pr-4 py-2 border rounded-md"
+            />
+            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+          </div>
+
+          <div class="space-y-1">
+            <!-- Sidebar items -->
+            <div class="sidebar-item active">
+              <i class="fas fa-tachometer-alt text-gray-500"></i>
+              <span>Security Dashboard</span>
+            </div>
+
+            <div class="sidebar-item">
+              <i class="fas fa-chevron-right text-gray-500"></i>
+              <span>Scalability</span>
+            </div>
+
+            <div class="sidebar-item">
+              <i class="fas fa-chevron-right expanded-icon text-gray-500"></i>
+              <span>Security</span>
+            </div>
+
+            <div class="sidebar-submenu ml-6 space-y-1">
+              <div class="sidebar-item">
+                <i class="fas fa-lock text-gray-500"></i>
+                <span>Encryption</span>
+              </div>
+
+              <div class="sidebar-item">
+                <i class="fas fa-users-cog text-gray-500"></i>
+                <span>Access Control</span>
+              </div>
+
+              <div class="sidebar-item">
+                <i class="fas fa-key text-gray-500"></i>
+                <span>API Security</span>
+              </div>
+
+              <div class="sidebar-item">
+                <i class="fas fa-shield-virus text-gray-500"></i>
+                <span>Threat Protection</span>
+              </div>
+            </div>
+
+            <div class="sidebar-item">
+              <i class="fas fa-chevron-right text-gray-500"></i>
+              <span>Compliance</span>
+            </div>
+
+            <div class="sidebar-item">
+              <i class="fas fa-chevron-right text-gray-500"></i>
+              <span>Audit Logs</span>
+            </div>
+
+            <div class="sidebar-item">
+              <i class="fas fa-chevron-right text-gray-500"></i>
+              <span>Performance</span>
+            </div>
+
+            <div class="sidebar-item">
+              <i class="fas fa-chevron-right text-gray-500"></i>
+              <span>Backup & Recovery</span>
+            </div>
+
+            <div class="sidebar-item">
+              <i class="fas fa-chevron-right text-gray-500"></i>
+              <span>System Health</span>
+            </div>
+          </div>
+
+          <div class="mt-8">
+            <h3
+              class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-3"
+            >
+              Security Status
+            </h3>
+            <div class="space-y-2">
+              <div
+                class="flex items-center px-3 py-2 rounded-md hover:bg-gray-50"
+              >
+                <div
+                  class="w-2 h-2 bg-green-500 rounded-full mr-2 pulse-dot"
+                ></div>
+                <span class="text-sm">Encryption</span>
+                <span class="ml-auto text-xs text-green-600">Secure</span>
+              </div>
+              <div
+                class="flex items-center px-3 py-2 rounded-md hover:bg-gray-50"
+              >
+                <div
+                  class="w-2 h-2 bg-green-500 rounded-full mr-2 pulse-dot"
+                ></div>
+                <span class="text-sm">Access Control</span>
+                <span class="ml-auto text-xs text-green-600">Secure</span>
+              </div>
+              <div
+                class="flex items-center px-3 py-2 rounded-md hover:bg-gray-50"
+              >
+                <div
+                  class="w-2 h-2 bg-yellow-500 rounded-full mr-2 pulse-dot"
+                ></div>
+                <span class="text-sm">API Security</span>
+                <span class="ml-auto text-xs text-yellow-600">Review</span>
+              </div>
+              <div
+                class="flex items-center px-3 py-2 rounded-md hover:bg-gray-50"
+              >
+                <div
+                  class="w-2 h-2 bg-green-500 rounded-full mr-2 pulse-dot"
+                ></div>
+                <span class="text-sm">Compliance</span>
+                <span class="ml-auto text-xs text-green-600">Compliant</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="flex-1 overflow-y-auto bg-gray-50 p-6">
+        <div class="max-w-7xl mx-auto">
+          <!-- Header Section -->
+          <div class="flex justify-between items-center mb-6">
+            <div>
+              <h1 class="text-2xl font-bold text-gray-900">
+                Scalability & Security Dashboard
+              </h1>
+              <p class="text-gray-600">
+                Enterprise-grade security and performance monitoring
+              </p>
+            </div>
+            <div class="flex space-x-3">
+              <button
+                class="px-4 py-2 bg-white border rounded-md text-gray-700 flex items-center"
+              >
+                <i class="fas fa-download mr-2"></i> Export Report
+              </button>
+              <button
+                class="px-4 py-2 bg-purple-600 text-white rounded-md flex items-center"
+              >
+                <i class="fas fa-shield-alt mr-2"></i> Security Scan
+              </button>
+            </div>
+          </div>
+
+          <!-- Security Overview Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <!-- Security Score -->
+            <div class="bg-white rounded-lg shadow-sm border p-4">
+              <div class="flex justify-between items-start">
+                <div>
+                  <p class="text-sm font-medium text-gray-500">
+                    Security Score
+                  </p>
+                  <p class="text-2xl font-bold mt-1">92/100</p>
+                </div>
+                <div class="p-2 bg-green-100 rounded-md">
+                  <i class="fas fa-shield-alt text-green-600"></i>
+                </div>
+              </div>
+              <div class="mt-4 flex items-center text-sm">
+                <span class="text-green-600 flex items-center">
+                  <i class="fas fa-arrow-up mr-1"></i> 3 points
+                </span>
+                <span class="text-gray-500 ml-2">since last scan</span>
+              </div>
+            </div>
+
+            <!-- Compliance Status -->
+            <div class="bg-white rounded-lg shadow-sm border p-4">
+              <div class="flex justify-between items-start">
+                <div>
+                  <p class="text-sm font-medium text-gray-500">
+                    Compliance Status
+                  </p>
+                  <p class="text-2xl font-bold mt-1">GDPR, HIPAA</p>
+                </div>
+                <div class="p-2 bg-blue-100 rounded-md">
+                  <i class="fas fa-clipboard-check text-blue-600"></i>
+                </div>
+              </div>
+              <div class="mt-4 flex items-center text-sm">
+                <span class="text-green-600 flex items-center">
+                  <i class="fas fa-check-circle mr-1"></i> Compliant
+                </span>
+                <span class="text-gray-500 ml-2">all requirements met</span>
+              </div>
+            </div>
+
+            <!-- Active Threats -->
+            <div class="bg-white rounded-lg shadow-sm border p-4">
+              <div class="flex justify-between items-start">
+                <div>
+                  <p class="text-sm font-medium text-gray-500">
+                    Active Threats
+                  </p>
+                  <p class="text-2xl font-bold mt-1">0</p>
+                </div>
+                <div class="p-2 bg-green-100 rounded-md">
+                  <i class="fas fa-virus-slash text-green-600"></i>
+                </div>
+              </div>
+              <div class="mt-4 flex items-center text-sm">
+                <span class="text-green-600 flex items-center">
+                  <i class="fas fa-shield-alt mr-1"></i> Protected
+                </span>
+                <span class="text-gray-500 ml-2">last scan: 2h ago</span>
+              </div>
+            </div>
+
+            <!-- System Load -->
+            <div class="bg-white rounded-lg shadow-sm border p-4">
+              <div class="flex justify-between items-start">
+                <div>
+                  <p class="text-sm font-medium text-gray-500">System Load</p>
+                  <p class="text-2xl font-bold mt-1">42%</p>
+                </div>
+                <div class="p-2 bg-blue-100 rounded-md">
+                  <i class="fas fa-server text-blue-600"></i>
+                </div>
+              </div>
+              <div class="mt-4 flex items-center text-sm">
+                <span class="text-green-600 flex items-center">
+                  <i class="fas fa-check-circle mr-1"></i> Optimal
+                </span>
+                <span class="text-gray-500 ml-2">auto-scaling active</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Scalability Section -->
+          <div class="bg-white rounded-lg shadow-sm border mb-6">
+            <div class="p-4 border-b flex justify-between items-center">
+              <div>
+                <h2 class="font-semibold text-gray-900">
+                  Scalability Performance
+                </h2>
+                <p class="text-sm text-gray-600">
+                  System scaling and performance metrics
+                </p>
+              </div>
+              <div class="flex items-center space-x-4">
+                <div class="text-sm text-gray-500">
+                  <span>Time Range:</span>
+                  <select class="ml-2 border rounded-md px-2 py-1">
+                    <option>Last 24 hours</option>
+                    <option selected>Last 7 days</option>
+                    <option>Last 30 days</option>
+                    <option>Custom</option>
+                  </select>
+                </div>
+                <button class="text-sm text-purple-600 flex items-center">
+                  <i class="fas fa-sync-alt mr-1"></i> Refresh
+                </button>
+              </div>
+            </div>
+
+            <div class="p-4">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Horizontal & Vertical Scaling -->
+                <div class="bg-gray-50 rounded-lg p-4 border">
+                  <h3 class="text-sm font-medium text-gray-700 mb-3">
+                    Scaling Status
+                  </h3>
+                  <div class="space-y-4">
+                    <div>
+                      <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium"
+                          >Active Instances</span
+                        >
+                        <span class="text-sm text-gray-500">8 / 12 max</span>
+                      </div>
+                      <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          class="bg-purple-500 h-2 rounded-full chart-bar"
+                          style="width: 66%"
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium">CPU Utilization</span>
+                        <span class="text-sm text-gray-500">42%</span>
+                      </div>
+                      <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          class="bg-green-500 h-2 rounded-full chart-bar"
+                          style="width: 42%"
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium">Memory Usage</span>
+                        <span class="text-sm text-gray-500">58%</span>
+                      </div>
+                      <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          class="bg-blue-500 h-2 rounded-full chart-bar"
+                          style="width: 58%"
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium"
+                          >Storage Capacity</span
+                        >
+                        <span class="text-sm text-gray-500">37%</span>
+                      </div>
+                      <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          class="bg-green-500 h-2 rounded-full chart-bar"
+                          style="width: 37%"
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mt-4">
+                    <div class="flex items-center justify-between text-sm">
+                      <span>Auto-scaling:</span>
+                      <span class="text-green-600 font-medium">Active</span>
+                    </div>
+                    <div class="flex items-center justify-between text-sm mt-1">
+                      <span>Last scaled:</span>
+                      <span>2 hours ago</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Asynchronous Processing & Queues -->
+                <div class="bg-gray-50 rounded-lg p-4 border">
+                  <h3 class="text-sm font-medium text-gray-700 mb-3">
+                    Queue Performance
+                  </h3>
+                  <div class="space-y-4">
+                    <div>
+                      <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium">Active Jobs</span>
+                        <span class="text-sm text-gray-500">247</span>
+                      </div>
+                      <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          class="bg-blue-500 h-2 rounded-full chart-bar"
+                          style="width: 45%"
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium">Queue Depth</span>
+                        <span class="text-sm text-gray-500">128</span>
+                      </div>
+                      <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          class="bg-green-500 h-2 rounded-full chart-bar"
+                          style="width: 25%"
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium">Processing Rate</span>
+                        <span class="text-sm text-gray-500">1,245/min</span>
+                      </div>
+                      <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          class="bg-purple-500 h-2 rounded-full chart-bar"
+                          style="width: 62%"
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium">Retry Rate</span>
+                        <span class="text-sm text-gray-500">1.2%</span>
+                      </div>
+                      <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          class="bg-green-500 h-2 rounded-full chart-bar"
+                          style="width: 1.2%"
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mt-4">
+                    <div class="flex items-center justify-between text-sm">
+                      <span>Queue Health:</span>
+                      <span class="text-green-600 font-medium">Optimal</span>
+                    </div>
+                    <div class="flex items-center justify-between text-sm mt-1">
+                      <span>Parallel Workers:</span>
+                      <span>24 active</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Load Balancing & Auto-Scaling -->
+                <div class="bg-gray-50 rounded-lg p-4 border">
+                  <h3 class="text-sm font-medium text-gray-700 mb-3">
+                    Load Balancing
+                  </h3>
+                  <div class="space-y-4">
+                    <div>
+                      <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium"
+                          >Traffic Distribution</span
+                        >
+                        <span class="text-sm text-gray-500">Balanced</span>
+                      </div>
+                      <div class="grid grid-cols-4 gap-1">
+                        <div
+                          class="bg-purple-500 h-8 rounded"
+                          style="opacity: 0.85"
+                        ></div>
+                        <div
+                          class="bg-purple-500 h-8 rounded"
+                          style="opacity: 0.9"
+                        ></div>
+                        <div
+                          class="bg-purple-500 h-8 rounded"
+                          style="opacity: 0.8"
+                        ></div>
+                        <div
+                          class="bg-purple-500 h-8 rounded"
+                          style="opacity: 0.95"
+                        ></div>
+                      </div>
+                      <div class="text-xs text-gray-500 mt-1 text-center">
+                        Load across 4 availability zones
+                      </div>
+                    </div>
+
+                    <div>
+                      <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium">Response Time</span>
+                        <span class="text-sm text-gray-500">187ms avg</span>
+                      </div>
+                      <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          class="bg-green-500 h-2 rounded-full chart-bar"
+                          style="width: 30%"
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium"
+                          >Scaling Events (7d)</span
+                        >
+                        <span class="text-sm text-gray-500">12</span>
+                      </div>
+                      <div class="flex items-center space-x-1">
+                        <div class="bg-green-500 h-4 w-4 rounded-full"></div>
+                        <div class="text-xs">8 scale-out</div>
+                        <div
+                          class="bg-blue-500 h-4 w-4 rounded-full ml-2"
+                        ></div>
+                        <div class="text-xs">4 scale-in</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mt-4">
+                    <div class="flex items-center justify-between text-sm">
+                      <span>Failover Status:</span>
+                      <span class="text-green-600 font-medium">Ready</span>
+                    </div>
+                    <div class="flex items-center justify-between text-sm mt-1">
+                      <span>Last Failover Test:</span>
+                      <span>7 days ago</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Security Section -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <!-- Encryption & Data Protection -->
+            <div class="bg-white rounded-lg shadow-sm border">
+              <div class="p-4 border-b">
+                <h2 class="font-semibold text-gray-900">
+                  Encryption & Data Protection
+                </h2>
+                <p class="text-sm text-gray-600">
+                  End-to-end data security measures
+                </p>
+              </div>
+
+              <div class="p-4">
+                <div class="space-y-4">
+                  <div class="security-card p-3 bg-gray-50 rounded-md border">
+                    <div class="flex justify-between items-start">
+                      <div class="flex items-center">
+                        <div
+                          class="w-8 h-8 bg-green-100 rounded-md flex items-center justify-center mr-3"
+                        >
+                          <i class="fas fa-lock text-green-600"></i>
+                        </div>
+                        <div>
+                          <div class="font-medium">Data in Transit</div>
+                          <div class="text-xs text-gray-500">
+                            TLS 1.3 Encryption
+                          </div>
+                        </div>
+                      </div>
+                      <span class="security-badge high">
+                        <i class="fas fa-shield-alt text-xs mr-1"></i> Secure
+                      </span>
+                    </div>
+                    <div class="mt-3 text-sm">
+                      <div class="flex items-center text-gray-600">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        <span>HTTPS enforced for all connections</span>
+                      </div>
+                      <div class="flex items-center text-gray-600 mt-1">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        <span>Perfect Forward Secrecy enabled</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="security-card p-3 bg-gray-50 rounded-md border">
+                    <div class="flex justify-between items-start">
+                      <div class="flex items-center">
+                        <div
+                          class="w-8 h-8 bg-green-100 rounded-md flex items-center justify-center mr-3"
+                        >
+                          <i class="fas fa-database text-green-600"></i>
+                        </div>
+                        <div>
+                          <div class="font-medium">Data at Rest</div>
+                          <div class="text-xs text-gray-500">
+                            AES-256 Encryption
+                          </div>
+                        </div>
+                      </div>
+                      <span class="security-badge high">
+                        <i class="fas fa-shield-alt text-xs mr-1"></i> Secure
+                      </span>
+                    </div>
+                    <div class="mt-3 text-sm">
+                      <div class="flex items-center text-gray-600">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        <span>All stored data is encrypted</span>
+                      </div>
+                      <div class="flex items-center text-gray-600 mt-1">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        <span>Encryption keys managed in secure vault</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="security-card p-3 bg-gray-50 rounded-md border">
+                    <div class="flex justify-between items-start">
+                      <div class="flex items-center">
+                        <div
+                          class="w-8 h-8 bg-green-100 rounded-md flex items-center justify-center mr-3"
+                        >
+                          <i class="fas fa-key text-green-600"></i>
+                        </div>
+                        <div>
+                          <div class="font-medium">Key Management</div>
+                          <div class="text-xs text-gray-500">
+                            Secure Key Rotation
+                          </div>
+                        </div>
+                      </div>
+                      <span class="security-badge high">
+                        <i class="fas fa-shield-alt text-xs mr-1"></i> Secure
+                      </span>
+                    </div>
+                    <div class="mt-3 text-sm">
+                      <div class="flex items-center text-gray-600">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        <span>Automatic key rotation every 90 days</span>
+                      </div>
+                      <div class="flex items-center text-gray-600 mt-1">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        <span>Hardware Security Module (HSM) protection</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Access Control & Authentication -->
+            <div class="bg-white rounded-lg shadow-sm border">
+              <div class="p-4 border-b">
+                <h2 class="font-semibold text-gray-900">
+                  Access Control & Authentication
+                </h2>
+                <p class="text-sm text-gray-600">
+                  Role-based access and authentication security
+                </p>
+              </div>
+
+              <div class="p-4">
+                <div class="space-y-4">
+                  <div class="security-card p-3 bg-gray-50 rounded-md border">
+                    <div class="flex justify-between items-start">
+                      <div class="flex items-center">
+                        <div
+                          class="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center mr-3"
+                        >
+                          <i class="fas fa-users-cog text-blue-600"></i>
+                        </div>
+                        <div>
+                          <div class="font-medium">
+                            Role-Based Access Control
+                          </div>
+                          <div class="text-xs text-gray-500">
+                            Least Privilege Model
+                          </div>
+                        </div>
+                      </div>
+                      <span class="security-badge high">
+                        <i class="fas fa-shield-alt text-xs mr-1"></i> Secure
+                      </span>
+                    </div>
+                    <div class="mt-3 text-sm">
+                      <div class="flex items-center text-gray-600">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        <span>5 active roles with custom permissions</span>
+                      </div>
+                      <div class="flex items-center text-gray-600 mt-1">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        <span>Granular access controls for all resources</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="security-card p-3 bg-gray-50 rounded-md border">
+                    <div class="flex justify-between items-start">
+                      <div class="flex items-center">
+                        <div
+                          class="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center mr-3"
+                        >
+                          <i class="fas fa-user-shield text-blue-600"></i>
+                        </div>
+                        <div>
+                          <div class="font-medium">
+                            Multi-Factor Authentication
+                          </div>
+                          <div class="text-xs text-gray-500">
+                            2FA Enforcement
+                          </div>
+                        </div>
+                      </div>
+                      <span class="security-badge high">
+                        <i class="fas fa-shield-alt text-xs mr-1"></i> Secure
+                      </span>
+                    </div>
+                    <div class="mt-3 text-sm">
+                      <div class="flex items-center text-gray-600">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        <span>MFA enabled for all admin accounts</span>
+                      </div>
+                      <div class="flex items-center text-gray-600 mt-1">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        <span>TOTP and hardware key support</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="security-card p-3 bg-gray-50 rounded-md border">
+                    <div class="flex justify-between items-start">
+                      <div class="flex items-center">
+                        <div
+                          class="w-8 h-8 bg-yellow-100 rounded-md flex items-center justify-center mr-3"
+                        >
+                          <i class="fas fa-sign-in-alt text-yellow-600"></i>
+                        </div>
+                        <div>
+                          <div class="font-medium">Single Sign-On</div>
+                          <div class="text-xs text-gray-500">
+                            SAML & OAuth Integration
+                          </div>
+                        </div>
+                      </div>
+                      <span class="security-badge medium">
+                        <i class="fas fa-shield-alt text-xs mr-1"></i> Configure
+                      </span>
+                    </div>
+                    <div class="mt-3 text-sm">
+                      <div class="flex items-center text-gray-600">
+                        <i
+                          class="fas fa-exclamation-circle text-yellow-500 mr-2"
+                        ></i>
+                        <span>SSO available but not configured</span>
+                      </div>
+                      <div class="flex items-center text-gray-600 mt-1">
+                        <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                        <span>Supports Azure AD, Okta, Google Workspace</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- API Security & Compliance -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <!-- API Security -->
+            <div class="bg-white rounded-lg shadow-sm border">
+              <div class="p-4 border-b">
+                <h2 class="font-semibold text-gray-900">API Security</h2>
+                <p class="text-sm text-gray-600">
+                  Secure API gateway and authentication
+                </p>
+              </div>
+
+              <div class="p-4">
+                <div class="space-y-4">
+                  <div class="security-card p-3 bg-gray-50 rounded-md border">
+                    <div class="flex justify-between items-start">
+                      <div class="flex items-center">
+                        <div
+                          class="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center mr-3"
+                        >
+                          <i class="fas fa-key text-blue-600"></i>
+                        </div>
+                        <div>
+                          <div class="font-medium">API Authentication</div>
+                          <div class="text-xs text-gray-500">
+                            OAuth 2.0 & API Keys
+                          </div>
+                        </div>
+                      </div>
+                      <span class="security-badge high">
+                        <i class="fas fa-shield-alt text-xs mr-1"></i> Secure
+                      </span>
+                    </div>
+                    <div class="mt-3 text-sm">
+                      <div class="flex items-center text-gray-600">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        <span>OAuth 2.0 with JWT tokens</span>
+                      </div>
+                      <div class="flex items-center text-gray-600 mt-1">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        <span>Automatic token rotation</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="security-card p-3 bg-gray-50 rounded-md border">
+                    <div class="flex justify-between items-start">
+                      <div class="flex items-center">
+                        <div
+                          class="w-8 h-8 bg-yellow-100 rounded-md flex items-center justify-center mr-3"
+                        >
+                          <i class="fas fa-network-wired text-yellow-600"></i>
+                        </div>
+                        <div>
+                          <div class="font-medium">IP Restrictions</div>
+                          <div class="text-xs text-gray-500">
+                            IP Whitelisting
+                          </div>
+                        </div>
+                      </div>
+                      <span class="security-badge medium">
+                        <i class="fas fa-shield-alt text-xs mr-1"></i> Configure
+                      </span>
+                    </div>
+                    <div class="mt-3 text-sm">
+                      <div class="flex items-center text-gray-600">
+                        <i
+                          class="fas fa-exclamation-circle text-yellow-500 mr-2"
+                        ></i>
+                        <span
+                          >IP whitelisting available but not configured</span
+                        >
+                      </div>
+                      <div class="flex items-center text-gray-600 mt-1">
+                        <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                        <span>Recommended for production environments</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="security-card p-3 bg-gray-50 rounded-md border">
+                    <div class="flex justify-between items-start">
+                      <div class="flex items-center">
+                        <div
+                          class="w-8 h-8 bg-green-100 rounded-md flex items-center justify-center mr-3"
+                        >
+                          <i class="fas fa-shield-virus text-green-600"></i>
+                        </div>
+                        <div>
+                          <div class="font-medium">Rate Limiting</div>
+                          <div class="text-xs text-gray-500">
+                            API Abuse Prevention
+                          </div>
+                        </div>
+                      </div>
+                      <span class="security-badge high">
+                        <i class="fas fa-shield-alt text-xs mr-1"></i> Secure
+                      </span>
+                    </div>
+                    <div class="mt-3 text-sm">
+                      <div class="flex items-center text-gray-600">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        <span>Rate limiting enabled (1000 req/min)</span>
+                      </div>
+                      <div class="flex items-center text-gray-600 mt-1">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        <span>Automatic blocking of suspicious activity</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Compliance & Audit -->
+            <div class="bg-white rounded-lg shadow-sm border">
+              <div class="p-4 border-b">
+                <h2 class="font-semibold text-gray-900">Compliance & Audit</h2>
+                <p class="text-sm text-gray-600">
+                  Regulatory compliance and audit logging
+                </p>
+              </div>
+
+              <div class="p-4">
+                <div class="space-y-4">
+                  <div class="security-card p-3 bg-gray-50 rounded-md border">
+                    <div class="flex justify-between items-start">
+                      <div class="flex items-center">
+                        <div
+                          class="w-8 h-8 bg-green-100 rounded-md flex items-center justify-center mr-3"
+                        >
+                          <i class="fas fa-clipboard-check text-green-600"></i>
+                        </div>
+                        <div>
+                          <div class="font-medium">GDPR Compliance</div>
+                          <div class="text-xs text-gray-500">
+                            Data Protection
+                          </div>
+                        </div>
+                      </div>
+                      <span class="compliance-badge compliant">
+                        <i class="fas fa-check-circle text-xs mr-1"></i>
+                        Compliant
+                      </span>
+                    </div>
+                    <div class="mt-3 text-sm">
+                      <div class="flex items-center text-gray-600">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        <span>Data processing agreements in place</span>
+                      </div>
+                      <div class="flex items-center text-gray-600 mt-1">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        <span>Data subject rights management</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="security-card p-3 bg-gray-50 rounded-md border">
+                    <div class="flex justify-between items-start">
+                      <div class="flex items-center">
+                        <div
+                          class="w-8 h-8 bg-green-100 rounded-md flex items-center justify-center mr-3"
+                        >
+                          <i class="fas fa-hospital-user text-green-600"></i>
+                        </div>
+                        <div>
+                          <div class="font-medium">HIPAA Compliance</div>
+                          <div class="text-xs text-gray-500">
+                            Healthcare Data
+                          </div>
+                        </div>
+                      </div>
+                      <span class="compliance-badge compliant">
+                        <i class="fas fa-check-circle text-xs mr-1"></i>
+                        Compliant
+                      </span>
+                    </div>
+                    <div class="mt-3 text-sm">
+                      <div class="flex items-center text-gray-600">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        <span>BAA agreements available</span>
+                      </div>
+                      <div class="flex items-center text-gray-600 mt-1">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        <span>PHI handling protocols in place</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="security-card p-3 bg-gray-50 rounded-md border">
+                    <div class="flex justify-between items-start">
+                      <div class="flex items-center">
+                        <div
+                          class="w-8 h-8 bg-green-100 rounded-md flex items-center justify-center mr-3"
+                        >
+                          <i class="fas fa-history text-green-600"></i>
+                        </div>
+                        <div>
+                          <div class="font-medium">Audit Logging</div>
+                          <div class="text-xs text-gray-500">
+                            Tamper-Proof Logs
+                          </div>
+                        </div>
+                      </div>
+                      <span class="compliance-badge compliant">
+                        <i class="fas fa-check-circle text-xs mr-1"></i> Active
+                      </span>
+                    </div>
+                    <div class="mt-3 text-sm">
+                      <div class="flex items-center text-gray-600">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        <span>Immutable audit logs for all activities</span>
+                      </div>
+                      <div class="flex items-center text-gray-600 mt-1">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        <span>90-day retention policy</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Security Updates & Patching -->
+          <div class="bg-white rounded-lg shadow-sm border mb-6">
+            <div class="p-4 border-b">
+              <h2 class="font-semibold text-gray-900">
+                Security Updates & Patching
+              </h2>
+              <p class="text-sm text-gray-600">
+                Automatic security patching and updates
+              </p>
+            </div>
+
+            <div class="p-4">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Update Status -->
+                <div class="bg-gray-50 rounded-lg p-4 border">
+                  <h3 class="text-sm font-medium text-gray-700 mb-3">
+                    Update Status
+                  </h3>
+                  <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm">Platform Version</span>
+                      <span class="text-sm font-medium">v3.8.2</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm">Last Updated</span>
+                      <span class="text-sm font-medium">3 days ago</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm">Security Patches</span>
+                      <span class="text-sm font-medium text-green-600"
+                        >Up to date</span
+                      >
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm">Auto-Updates</span>
+                      <label class="toggle-switch">
+                        <input type="checkbox" checked />
+                        <span class="slider"></span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="mt-4">
+                    <button
+                      class="w-full py-2 bg-purple-600 text-white rounded-md text-sm"
+                    >
+                      Check for Updates
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Recent Updates -->
+                <div class="bg-gray-50 rounded-lg p-4 border">
+                  <h3 class="text-sm font-medium text-gray-700 mb-3">
+                    Recent Updates
+                  </h3>
+                  <div class="space-y-3">
+                    <div class="timeline-item success pl-6">
+                      <div class="text-sm">
+                        <div class="font-medium">Security Patch v3.8.2</div>
+                        <div class="text-gray-500">3 days ago</div>
+                        <div class="text-xs text-gray-500 mt-1">
+                          OAuth token handling improvements
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="timeline-item success pl-6">
+                      <div class="text-sm">
+                        <div class="font-medium">Security Patch v3.8.1</div>
+                        <div class="text-gray-500">10 days ago</div>
+                        <div class="text-xs text-gray-500 mt-1">
+                          TLS configuration hardening
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="timeline-item success pl-6">
+                      <div class="text-sm">
+                        <div class="font-medium">Platform Update v3.8.0</div>
+                        <div class="text-gray-500">14 days ago</div>
+                        <div class="text-xs text-gray-500 mt-1">
+                          Major release with security enhancements
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Vulnerability Management -->
+                <div class="bg-gray-50 rounded-lg p-4 border">
+                  <h3 class="text-sm font-medium text-gray-700 mb-3">
+                    Vulnerability Management
+                  </h3>
+                  <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm">Last Security Scan</span>
+                      <span class="text-sm font-medium">Today</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm">Critical Vulnerabilities</span>
+                      <span class="text-sm font-medium text-green-600">0</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm">Medium Vulnerabilities</span>
+                      <span class="text-sm font-medium text-green-600">0</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm">Penetration Testing</span>
+                      <span class="text-sm font-medium">Quarterly</span>
+                    </div>
+                  </div>
+
+                  <div class="mt-4">
+                    <button
+                      class="w-full py-2 border border-gray-300 rounded-md text-sm"
+                    >
+                      View Security Report
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- Right Sidebar -->
+      <aside class="w-72 border-l bg-white overflow-y-auto">
+        <div class="p-4">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="font-medium">Security Recommendations</h3>
+            <button class="text-purple-800 font-medium">View All</button>
+          </div>
+
+          <div class="mb-6">
+            <div class="text-xl font-medium">Security Score: 92/100</div>
+            <div class="text-sm text-gray-600 mb-2">
+              3 recommendations to improve
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2 mb-4">
+              <div
+                class="bg-green-500 h-2 rounded-full"
+                style="width: 92%"
+              ></div>
+            </div>
+          </div>
+
+          <div class="mb-6">
+            <h3 class="font-medium mb-4">Recommended Actions</h3>
+            <div class="space-y-3">
+              <div class="p-3 bg-yellow-50 rounded-md border border-yellow-200">
+                <div class="flex items-center text-sm">
+                  <div
+                    class="w-8 h-8 bg-yellow-100 rounded-md flex items-center justify-center mr-3"
+                  >
+                    <i class="fas fa-network-wired text-yellow-600"></i>
+                  </div>
+                  <span class="font-medium">Configure IP Whitelisting</span>
+                </div>
+                <p class="text-xs text-gray-600 mt-2">
+                  Restrict API access to trusted IP addresses for enhanced
+                  security.
+                </p>
+                <button
+                  class="mt-2 w-full py-1.5 bg-yellow-100 text-yellow-800 rounded text-xs font-medium"
+                >
+                  Configure Now
+                </button>
+              </div>
+
+              <div class="p-3 bg-yellow-50 rounded-md border border-yellow-200">
+                <div class="flex items-center text-sm">
+                  <div
+                    class="w-8 h-8 bg-yellow-100 rounded-md flex items-center justify-center mr-3"
+                  >
+                    <i class="fas fa-sign-in-alt text-yellow-600"></i>
+                  </div>
+                  <span class="font-medium">Enable Single Sign-On</span>
+                </div>
+                <p class="text-xs text-gray-600 mt-2">
+                  Configure SSO with your identity provider for centralized
+                  authentication.
+                </p>
+                <button
+                  class="mt-2 w-full py-1.5 bg-yellow-100 text-yellow-800 rounded text-xs font-medium"
+                >
+                  Set Up SSO
+                </button>
+              </div>
+
+              <div class="p-3 bg-yellow-50 rounded-md border border-yellow-200">
+                <div class="flex items-center text-sm">
+                  <div
+                    class="w-8 h-8 bg-yellow-100 rounded-md flex items-center justify-center mr-3"
+                  >
+                    <i class="fas fa-user-shield text-yellow-600"></i>
+                  </div>
+                  <span class="font-medium">Enforce MFA for All Users</span>
+                </div>
+                <p class="text-xs text-gray-600 mt-2">
+                  Currently only enforced for admin accounts. Extend to all
+                  users.
+                </p>
+                <button
+                  class="mt-2 w-full py-1.5 bg-yellow-100 text-yellow-800 rounded text-xs font-medium"
+                >
+                  Extend MFA Policy
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-6">
+            <h3 class="font-medium mb-4">Security Insights</h3>
+
+            <div class="space-y-4">
+              <div>
+                <div class="flex justify-between items-center mb-1">
+                  <span class="text-sm font-medium"
+                    >Failed Login Attempts (24h)</span
+                  >
+                  <span class="text-sm text-gray-500">3</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                  <div
+                    class="bg-green-500 h-1.5 rounded-full"
+                    style="width: 5%"
+                  ></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between items-center mb-1">
+                  <span class="text-sm font-medium"
+                    >API Key Rotations (30d)</span
+                  >
+                  <span class="text-sm text-gray-500">2</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                  <div
+                    class="bg-green-500 h-1.5 rounded-full"
+                    style="width: 66%"
+                  ></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between items-center mb-1">
+                  <span class="text-sm font-medium">Security Alerts (7d)</span>
+                  <span class="text-sm text-gray-500">0</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                  <div
+                    class="bg-green-500 h-1.5 rounded-full"
+                    style="width: 0%"
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-6">
+            <h3 class="font-medium mb-4">Compliance Status</h3>
+
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-sm">GDPR</span>
+                <span class="compliance-badge compliant">Compliant</span>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <span class="text-sm">HIPAA</span>
+                <span class="compliance-badge compliant">Compliant</span>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <span class="text-sm">SOC 2</span>
+                <span class="compliance-badge compliant">Compliant</span>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <span class="text-sm">ISO 27001</span>
+                <span class="compliance-badge partial">In Progress</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <script>
+      // Make sidebar items interactive
+      document.addEventListener("DOMContentLoaded", function () {
+        // Toggle sidebar items
+        const sidebarItems = document.querySelectorAll(".sidebar-item");
+        sidebarItems.forEach((item) => {
+          if (
+            item.querySelector(".expanded-icon") ||
+            item.querySelector(".fa-chevron-right")
+          ) {
+            item.addEventListener("click", function () {
+              const icon =
+                this.querySelector(".expanded-icon") ||
+                this.querySelector(".fa-chevron-right");
+              const submenu = this.nextElementSibling;
+
+              if (icon.classList.contains("expanded-icon")) {
+                icon.classList.toggle("expanded-icon");
+              } else {
+                icon.classList.add("expanded-icon");
+              }
+
+              if (submenu && submenu.classList.contains("sidebar-submenu")) {
+                submenu.style.display =
+                  submenu.style.display === "none" ? "block" : "none";
+              }
+            });
+          }
+        });
+
+        // Make narrow sidebar items interactive
+        const narrowSidebarItems = document.querySelectorAll(
+          ".narrow-sidebar-item"
+        );
+        narrowSidebarItems.forEach((item) => {
+          item.addEventListener("click", function () {
+            narrowSidebarItems.forEach((i) => i.classList.remove("active"));
+            this.classList.add("active");
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
